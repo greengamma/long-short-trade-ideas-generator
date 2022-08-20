@@ -22,6 +22,7 @@ google-cloud-storage
 mlflow
 s3fs
 yfinance
+streamlit
 
 # utilities
 six>=1.14
