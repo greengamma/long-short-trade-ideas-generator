@@ -1,23 +1,47 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from io import BytesIO
 from demo_data import DemoData
+from ratio_data import Ratio_data
 
+# Uses entire screen width
 st.set_page_config(layout="wide")
 
 
 #Kaggle Data to be replaced with modelled data
 @st.cache
 def init():
-    demo = DemoData()
-    data = demo.getData()
-    symbols, stock_dict = demo.makeDictionary(data)
-    return symbols, stock_dict
+    ratios = Ratio_data()
+    sp500 = DemoData()
+
+    #Function to merge stock data for plotting
+    def merge(stockA, stockB):
+        merged_stocks = pd.merge(stock_dict[stockA],
+                                 stock_dict[stockB],
+                                 on='Date')
+        return merged_stocks
+
+    sp500_data = sp500.getData()
+    symbols, stock_dict = sp500.makeDictionary(sp500_data)
+    data = ratios.getData()
+
+    ##Splits column names and returns list of this weeks hedge pairs
+    hedge_pairs = ratios.split_hedge_names(data)
+
+    #merges stock data for each hedge into one for plotting
+    merged = []
+    for pairs in hedge_pairs:
+        merged.append(merge(pairs[0], pairs[1]))
+    merged_length = len(merged)
+
+    ## Stock Dictionary currently not upto date will need to update with current stock data.
+
+    return data, symbols, stock_dict, merged, merged_length, hedge_pairs
 
 
-symbols, stock_dict = init()
-
-# Uses entire screen width
+data, symbols, stock_dict, merged, merged_length, hedge_pairs = init()
 
 
 #defines local style sheet
@@ -32,16 +56,6 @@ local_css("style.css")
 #--------------------------
 #Callback functions
 #--------------------------
-stockA = 'MMM'
-stockB = 'ZTS'
-
-
-def merge(stockA, stockB):
-    merged_stocks = pd.merge(stock_dict[stockA], stock_dict[stockB], on='Date')
-    return merged_stocks
-
-
-merged = merge(stockA, stockB)
 
 #----------------------------------------------------------------------------
 #SIDEBAR
@@ -52,74 +66,31 @@ add_sidebar_title = st.sidebar.title('Filter Options')
 
 add_selectbox = st.sidebar.selectbox("Industry", ("A", "B", "C"),
                                      key='option1')
-stockA = st.sidebar.selectbox(
-    "Stock A",
-    (symbols),
-    key='option2',
-)
-stockB = st.sidebar.selectbox(
-    "Stock B",
-    (symbols),
-    key='option3',
-)
-add_sidebar_button = st.sidebar.button('Filter')
 
-merged = merge(stockA, stockB)
+add_sidebar_button = st.sidebar.button('Filter')
 
 #-----------------------------------------------------------------------------
 #Tabs
 #-----------------------------------------------------------------------------
+hedges = []
+for i in range(merged_length):
+    hedges.append(f'Long: {hedge_pairs[i][0]} / Short: {hedge_pairs[i][1]} ')
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    'Hedge1',
-    'Hedge2',
-    'Hedge3',
-    'Hedge4',
-    'Hedge5',
-])
+tabs = st.tabs(hedges)
 
-with tab1:
-    st.header(f'{stockA} and {stockB}')
-    st.line_chart(data=merged[['Close_x', 'Close_y']],
-                  x=None,
-                  y=None,
-                  width=0,
-                  height=0,
-                  use_container_width=True)
+for i, tab in enumerate(tabs):
+    with tabs[i]:
+        st.header(f'{hedge_pairs[i][0]} and {hedge_pairs[i][1]}')
 
-with tab2:
-    stock_name2 = 'ZION'
-    st.header(stock_name2)
-    st.line_chart(data=stock_dict[stock_name2]['Close'],
-                  x=None,
-                  y=None,
-                  width=0,
-                  height=0,
-                  use_container_width=True)
-with tab3:
-    stock_name3 = 'GD'
-    st.header(stock_name3)
-    st.line_chart(data=stock_dict[stock_name3]['Close'],
-                  x=None,
-                  y=None,
-                  width=0,
-                  height=0,
-                  use_container_width=True)
-with tab4:
-    stock_name4 = 'FANG'
-    st.header(stock_name4)
-    st.line_chart(data=stock_dict[stock_name4]['Close'],
-                  x=None,
-                  y=None,
-                  width=0,
-                  height=0,
-                  use_container_width=True)
-with tab5:
-    stock_name5 = 'BXP'
-    st.header(stock_name5)
-    st.line_chart(data=stock_dict[stock_name5]['Close'],
-                  x=None,
-                  y=None,
-                  width=0,
-                  height=0,
-                  use_container_width=True)
+        fig, ax = plt.subplots(figsize=(9, 4))
+
+        ax.plot(merged[i]['Date'], merged[i][['Close_x', 'Close_y']])
+        ax.set_xlabel('Date')
+        ax.set_ylabel('Price')
+        #display as graph option to discuss
+        # st.pyplot(fig)
+
+        #Converts graph into png for display due to constraints around figsize in stramlit
+        buf = BytesIO()
+        fig.savefig(buf, format="png")
+        st.image(buf)
