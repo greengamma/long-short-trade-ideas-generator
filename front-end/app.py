@@ -77,23 +77,35 @@ for i in range(merged_length):
     hedges.append(f'Long: {hedge_pairs[i][0]} / Short: {hedge_pairs[i][1]} ')
 
 tabs = st.tabs(hedges)
-
 #runs through all stocks pairs and adds a tab for each with relevant graphs
 for i, tab in enumerate(tabs):
     with tabs[i]:
         st.header(f'{hedge_pairs[i][0]} and {hedge_pairs[i][1]}')
+        col1, col2 = st.columns(2, gap="small")
+        with col1:
+            st.header('Stock Price')
+            # plot both stocks last 3 months data
+            fig1, ax1 = plt.subplots(figsize=(13, 5))
+            ax1.plot(merged[i]['Date'], merged[i][['Close_x', 'Close_y']])
+            ax1.set_xlabel('Date')
+            ax1.set_ylabel('Price')
+            #display as graph option to discuss
+            # st.pyplot(fig)
 
-        # plot both stocks last 3 months data
-        fig, ax = plt.subplots(figsize=(13, 5))
-        ax.plot(merged[i]['Date'], merged[i][['Close_x', 'Close_y']])
-        ax.set_xlabel('Date')
-        ax.set_ylabel('Price')
-        #display as graph option to discuss
-        # st.pyplot(fig)
+            #Converts graph into png for display due to constraints around figsize in stramlit
+            buf = BytesIO()
+            fig1.savefig(buf, format="png")
+            st.image(buf)
+        with col2:
+            st.header('Ratio')
+            fig2, ax2 = plt.subplots(figsize=(13, 5))
+            ax2.plot(data[data.columns[i + 1]])
+            ax2.set_xlabel('Date')
+            ax2.set_ylabel('Price')
+            #display as graph option to discuss
+            # st.pyplot(fig)
 
-        #Converts graph into png for display due to constraints around figsize in stramlit
-        buf = BytesIO()
-        fig.savefig(buf, format="png")
-        st.image(buf)
-
-        st.pyplot(fig)
+            #Converts graph into png for display due to constraints around figsize in stramlit
+            buf = BytesIO()
+            fig2.savefig(buf, format="png")
+            st.image(buf)
