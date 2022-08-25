@@ -6,6 +6,8 @@ from io import BytesIO
 from demo_data import DemoData
 from ratio_data import Ratio_data
 from data.refactored_data import Data
+import matplotlib.dates as mdates
+from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 # Uses entire screen width
 st.set_page_config(layout="wide")
 
@@ -97,6 +99,12 @@ for i, tab in enumerate(tabs):
             ax1.plot(merged[i]['Date'], stocks_data)
             ax1.set_xlabel('Date')
             ax1.set_ylabel('Price')
+            fig1.autofmt_xdate()
+            ax1.grid(True)
+            plt.gca().xaxis.set_major_formatter(
+                mdates.DateFormatter('%m/%d/%Y'))
+            plt.gca().xaxis.set_major_locator(
+                mdates.WeekdayLocator(byweekday=(FR)))
             #display as graph option to discuss
             # st.pyplot(fig)
 
@@ -107,9 +115,15 @@ for i, tab in enumerate(tabs):
         with col2:
             st.header('Ratio')
             fig2, ax2 = plt.subplots(figsize=(10, 6))
+            fig2.autofmt_xdate()
             ax2.plot(data['Date'], data[data.columns[i + 1]])
             ax2.set_xlabel('Date')
             ax2.set_ylabel('Ratio')
+            ax2.grid(True)
+            plt.gca().xaxis.set_major_formatter(
+                mdates.DateFormatter('%m/%d/%Y'))
+            plt.gca().xaxis.set_major_locator(
+                mdates.WeekdayLocator(byweekday=(FR)))
             #display as graph option to discuss
             # st.pyplot(fig)
 
