@@ -85,7 +85,7 @@ for i, tab in enumerate(tabs):
         with col1:
             st.header('Stock Price')
             # plot both stocks last 3 months data
-            fig1, ax1 = plt.subplots(figsize=(13, 5))
+            fig1, ax1 = plt.subplots(figsize=(10, 6))
             ax1.plot(merged[i]['Date'], merged[i][['Close_x', 'Close_y']])
             ax1.set_xlabel('Date')
             ax1.set_ylabel('Price')
@@ -98,14 +98,14 @@ for i, tab in enumerate(tabs):
             st.image(buf)
         with col2:
             st.header('Ratio')
-            fig2, ax2 = plt.subplots(figsize=(13, 5))
-            ax2.plot(data[data.columns[i + 1]])
+            fig2, ax2 = plt.subplots(figsize=(10, 6))
+            ax2.plot(data['Date'], data[data.columns[i + 1]])
             ax2.set_xlabel('Date')
-            ax2.set_ylabel('Price')
+            ax2.set_ylabel('Ratio')
             #display as graph option to discuss
             # st.pyplot(fig)
 
-            #Converts graph into png for display due to constraints around figsize in stramlit
+            #Converts graph into png for display due to constraints around figsize in streamlit
             buf = BytesIO()
             fig2.savefig(buf, format="png")
             st.image(buf)
