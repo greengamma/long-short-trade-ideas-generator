@@ -78,12 +78,13 @@ for i in range(merged_length):
 
 tabs = st.tabs(hedges)
 
+#runs through all stocks pairs and adds a tab for each with relevant graphs
 for i, tab in enumerate(tabs):
     with tabs[i]:
         st.header(f'{hedge_pairs[i][0]} and {hedge_pairs[i][1]}')
 
-        fig, ax = plt.subplots(figsize=(9, 4))
-
+        # plot both stocks last 3 months data
+        fig, ax = plt.subplots(figsize=(13, 5))
         ax.plot(merged[i]['Date'], merged[i][['Close_x', 'Close_y']])
         ax.set_xlabel('Date')
         ax.set_ylabel('Price')
@@ -94,3 +95,5 @@ for i, tab in enumerate(tabs):
         buf = BytesIO()
         fig.savefig(buf, format="png")
         st.image(buf)
+
+        st.pyplot(fig)
