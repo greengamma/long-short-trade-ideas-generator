@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 from demo_data import DemoData
 from ratio_data import Ratio_data
-
+from data.refactored_data import Data
 # Uses entire screen width
 st.set_page_config(layout="wide")
 
@@ -13,32 +13,39 @@ st.set_page_config(layout="wide")
 #Kaggle Data to be replaced with modelled data
 @st.cache
 def init():
-    ratios = Ratio_data()
-    sp500 = DemoData()
+    #practice data
+    #ratios = Ratio_data()
+    #sp500 = DemoData()
+
+    #-------------------------------------------------------------
+    # Data Retrieval
+    #-------------------------------------------------------------
+    dataX = Data()
+    #gets correct tickers
+    tickers = dataX.get_tickers()
+    #gets prices for last 3months arg for alternative "[num_of_months]mo"
+    prices = dataX.get_prices(tickers)
+    #calculates ratios from prices
+    # ratiosX = dataX.get_ratios(prices)
+    ratiosX = pd.read_excel('raw_data/cleaned_data.xlsx')
 
     #Function to merge stock data for plotting
-    def merge(stockA, stockB):
-        merged_stocks = pd.merge(stock_dict[stockA],
-                                 stock_dict[stockB],
-                                 on='Date')
+    def merge(prices, stockA, stockB):
+        merged_stocks = prices[['Date', stockA, stockB]]
         return merged_stocks
 
-    sp500_data = sp500.getData()
-    symbols, stock_dict = sp500.makeDictionary(sp500_data)
-    data = ratios.getData()
-
     ##Splits column names and returns list of this weeks hedge pairs
-    hedge_pairs = ratios.split_hedge_names(data)
+    hedge_pairs = dataX.split_hedge_names(ratiosX)
 
     #merges stock data for each hedge into one for plotting
     merged = []
     for pairs in hedge_pairs:
-        merged.append(merge(pairs[0], pairs[1]))
+        merged.append(merge(prices, pairs[0], pairs[1]))
     merged_length = len(merged)
 
     ## Stock Dictionary currently not upto date will need to update with current stock data.
 
-    return data, symbols, stock_dict, merged, merged_length, hedge_pairs
+    return ratiosX, tickers, prices, merged, merged_length, hedge_pairs
 
 
 data, symbols, stock_dict, merged, merged_length, hedge_pairs = init()
@@ -86,7 +93,8 @@ for i, tab in enumerate(tabs):
             st.header('Stock Price')
             # plot both stocks last 3 months data
             fig1, ax1 = plt.subplots(figsize=(10, 6))
-            ax1.plot(merged[i]['Date'], merged[i][['Close_x', 'Close_y']])
+            stocks_data = merged[i].drop('Date', axis=1)
+            ax1.plot(merged[i]['Date'], stocks_data)
             ax1.set_xlabel('Date')
             ax1.set_ylabel('Price')
             #display as graph option to discuss

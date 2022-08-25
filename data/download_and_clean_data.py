@@ -25,7 +25,7 @@ for ticker in tickers:
 # 2. Compute ratios
 ## concatenate all prices into one big dataframe
 df = pd.concat(price_list, axis=1)
-df = df.loc[:,~df.columns.duplicated()].copy()
+df = df.loc[:, ~df.columns.duplicated()].copy()
 
 df.set_index('Date', inplace=True)
 ratio_df = pd.concat([df[df.columns.difference([col])].div(df.where(df !=0, np.nan)[col], axis=0)\
@@ -38,7 +38,9 @@ df_delta = df_delta.iloc[-4:]
 
 ## only select ratios with consistent positive price changes
 df_newstocks = df_delta[df_delta.iloc[:] >= 0]
-positiveRatiosPercent = df_newstocks.drop(df_newstocks.columns[df_newstocks.apply(lambda col: col.isnull().sum() > 0)], axis=1)
+positiveRatiosPercent = df_newstocks.drop(df_newstocks.columns[
+    df_newstocks.apply(lambda col: col.isnull().sum() > 0)],
+                                          axis=1)
 labelList = list(positiveRatiosPercent.columns.values)
 df_positiveRatios = ratio_df[labelList]
 
@@ -79,7 +81,9 @@ while 1:
         ## parsing by column
         temp_series = new_df.iloc[:, column_index]
         temp_series_list = temp_series.values.tolist()
-        temp_series_list_sorted = sorted(temp_series_list, key=float, reverse=False)
+        temp_series_list_sorted = sorted(temp_series_list,
+                                         key=float,
+                                         reverse=False)
 
         if temp_series_list == temp_series_list_sorted:
             increasing_trend_list.append(True)
