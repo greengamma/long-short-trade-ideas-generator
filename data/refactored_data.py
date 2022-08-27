@@ -18,11 +18,11 @@ class Data:
     def get_tickers(self):
         '''creates list of sp500 ticker names from csv file'''
 
-        tickers = pd.read_csv('raw_data/tickers.csv', squeeze=True)
+        tickers = pd.read_csv('raw_data/tickers.csv').squeeze('columns')
         tickers = tickers.tolist()
         return tickers
 
-    def get_prices(self, tickers, time_period="3mo"):
+    def get_prices(self, tickers, time_period="6mo"):
         '''gets prices from yfinance for time_period for each ticker in arg list'''
         price_list = []
         for ticker in tickers:
@@ -32,17 +32,29 @@ class Data:
             price_list.append(stock)
             df = pd.concat(price_list, axis=1)
             df = df.loc[:, ~df.columns.duplicated()].copy()
-            # df.set_index('Date', inplace=True)
+            df.set_index('Date', inplace=True)
+
+        df.to_excel('raw_data/weekly_prices.xlsx')
         return df
 
-    def get_ratios(self, price_list):
-        '''computes all the ratios from the price_list'''
+    def get_ratios(self, wk_count):
 
-        ratio_df = pd.concat([price_list[price_list.columns.difference([col])].div(price_list.where(price_list !=0, np.nan)[col], axis=0)\
-                           .add_suffix("_" + col) for col in price_list.columns], axis=1)
+        df = pd.read_excel('raw_data/weekly_prices.xlsx')
+        df.set_index('Date', inplace=True)
 
+        ratio_df = pd.concat([
+            df[df.columns.difference([col])].div(
+                df.where(df != 0, np.nan)[col], axis=0).add_suffix("_" + col)
+            for col in df.columns
+        ],
+                             axis=1)
+
+        # 3. Compute daily price change in %
+        ## compute the % change of the ratio between today and yesterday for the last X days
         df_delta = ratio_df.pct_change(periods=1)
         df_delta = df_delta.iloc[-4:]
+
+        ## only select ratios with consistent positive price changes
         df_newstocks = df_delta[df_delta.iloc[:] >= 0]
         positiveRatiosPercent = df_newstocks.drop(df_newstocks.columns[
             df_newstocks.apply(lambda col: col.isnull().sum() > 0)],
@@ -51,7 +63,6 @@ class Data:
         df_positiveRatios = ratio_df[labelList]
 
         # 4. Friday closing
-        df_positiveRatios.reset_index(inplace=True)
         df_positiveRatios.reset_index(inplace=True)
 
         ## assign weekdays to dataframe
@@ -96,7 +107,7 @@ class Data:
                     increasing_trend_list.append(True)
                 else:
                     increasing_trend_list.append(False)
-                    column_index += 1
+                column_index += 1
 
             except Exception as e:
                 exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -111,21 +122,42 @@ class Data:
         ## complete_df: contains DAILY closing prices for the last 3 months
         df_positiveRatios.reset_index(inplace=True)
         complete_df = df_positiveRatios[increasing_trend_df.columns]
-
-        complete_df.to_excel('cleaned_data.xlsx')
-
+        # complete_df.drop('Unnamed: 0', axis=1)
+        complete_df.to_excel('raw_data/cleaned_data.xlsx')
+        print('completed ratios')
         return complete_df
 
     def split_hedge_names(self, df):
+        '''splits hedge name pairs in df for frontend use'''
         hedges = df.columns[1:]
         hedge_pairs = []
         for hedge in hedges:
             hedge_pairs.append(hedge.split('_'))
         return hedge_pairs
 
+    def create_SMA(self, days):
+        '''Creates Simple moving average for all ratios given for x days'''
+        ratios_df = pd.read_excel('raw_data/cleaned_data.xlsx')
+
+        no_dates = ratios_df.drop(['Date', 'Unnamed: 0'], axis=1)
+        SMA = pd.DataFrame()
+        i = 0
+        for column in no_dates.columns:
+            col = no_dates[column].rolling(days).sum() / days
+            insert_index = i
+            column_name = f'{column}_SMA_{days}_days'
+            SMA.insert(insert_index, column_name, col)
+            i = i + 1
+        SMA.to_excel(f'raw_data/sma_{days}_days.xlsx')
+        return SMA
+
 
 if __name__ == '__main__':
     data = Data()
-    tickers = data.get_tickers()
-    prices = data.get_prices(tickers, time_period="3mo")
-    print(prices)
+    # tickers = data.get_tickers()
+    # print('tickers made')
+    # prices = data.get_prices(tickers, time_period="3mo")
+    # print('prices calculated')
+    ratios = data.get_ratios(10)
+    print('ratios calculated')
+    print(ratios)

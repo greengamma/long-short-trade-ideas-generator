@@ -3,8 +3,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
-from demo_data import DemoData
-from ratio_data import Ratio_data
 from data.refactored_data import Data
 import matplotlib.dates as mdates
 from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
@@ -12,24 +10,23 @@ from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 st.set_page_config(layout="wide")
 
 
-#Kaggle Data to be replaced with modelled data
 @st.cache
 def init():
-    #practice data
-    #ratios = Ratio_data()
-    #sp500 = DemoData()
-
     #-------------------------------------------------------------
     # Data Retrieval
     #-------------------------------------------------------------
-    dataX = Data()
-    #gets correct tickers
-    tickers = dataX.get_tickers()
-    #gets prices for last 3months arg for alternative "[num_of_months]mo"
-    prices = dataX.get_prices(tickers)
-    #calculates ratios from prices
-    # ratiosX = dataX.get_ratios(prices)
-    ratiosX = pd.read_excel('raw_data/cleaned_data.xlsx')
+    data_retrieval = Data()
+
+    ratios = pd.read_excel('raw_data/cleaned_data.xlsx').drop(['Unnamed: 0'],
+                                                              axis=1)
+    tickers = pd.read_csv('raw_data/tickers.csv')
+    prices = pd.read_excel('raw_data/weekly_prices.xlsx')
+    sma10 = pd.read_excel('raw_data/sma_10_days.xlsx').drop(['Unnamed: 0'],
+                                                            axis=1)
+    sma20 = pd.read_excel('raw_data/sma_20_days.xlsx').drop(['Unnamed: 0'],
+                                                            axis=1)
+    sma60 = pd.read_excel('raw_data/sma_60_days.xlsx').drop(['Unnamed: 0'],
+                                                            axis=1)
 
     #Function to merge stock data for plotting
     def merge(prices, stockA, stockB):
@@ -37,7 +34,7 @@ def init():
         return merged_stocks
 
     ##Splits column names and returns list of this weeks hedge pairs
-    hedge_pairs = dataX.split_hedge_names(ratiosX)
+    hedge_pairs = data_retrieval.split_hedge_names(ratios)
 
     #merges stock data for each hedge into one for plotting
     merged = []
@@ -47,10 +44,11 @@ def init():
 
     ## Stock Dictionary currently not upto date will need to update with current stock data.
 
-    return ratiosX, tickers, prices, merged, merged_length, hedge_pairs
+    return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60
 
 
-data, symbols, stock_dict, merged, merged_length, hedge_pairs = init()
+data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60 = init(
+)
 
 
 #defines local style sheet
@@ -116,8 +114,19 @@ for i, tab in enumerate(tabs):
             st.header('Ratio')
             fig2, ax2 = plt.subplots(figsize=(10, 6))
             fig2.autofmt_xdate()
-            ax2.plot(data['Date'], data[data.columns[i + 1]])
-            ax2.set_xlabel('Date')
+            ratio, = ax2.plot(data['Date'], data[data.columns[i + 1]])
+            avg10, = ax2.plot(data['Date'], sma10[sma10.columns[i]])
+            avg20, = ax2.plot(data['Date'], sma20[sma20.columns[i]])
+            avg60, = ax2.plot(data['Date'], sma60[sma60.columns[i]])
+            ax2.legend(handles=[ratio, avg10, avg20, avg60],
+                       labels=[
+                           'daily ratio', '10 day average', '20 day average',
+                           '60 day average'
+                       ],
+                       loc='upper left',
+                       fontsize=10)
+
+            ax2.set_xlabel('Date'),
             ax2.set_ylabel('Ratio')
             ax2.grid(True)
             plt.gca().xaxis.set_major_formatter(
