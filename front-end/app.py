@@ -126,7 +126,7 @@ for i, tab in enumerate(tabs):
                        loc='upper left',
                        fontsize=10)
 
-            ax2.set_xlabel('Date'),
+            ax2.set_xlabel('Date')
             ax2.set_ylabel('Ratio')
             ax2.grid(True)
             plt.gca().xaxis.set_major_formatter(
