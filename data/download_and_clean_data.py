@@ -17,7 +17,7 @@ tickers = tickers.tolist()
 price_list = []
 
 for ticker in tickers:
-    stock = yf.Ticker(ticker).history(period="3mo").reset_index()
+    stock = yf.Ticker(ticker).history(period="6mo").reset_index()
     stock = stock[['Date', 'Close']]
     stock.rename(columns={'Close': ticker}, inplace=True)
     price_list.append(stock)
@@ -101,6 +101,4 @@ increasing_trend_df = new_df.iloc[:, increasing_trend_list]
 df_positiveRatios.reset_index(inplace=True)
 complete_df = df_positiveRatios[increasing_trend_df.columns]
 
-complete_df.to_excel('cleaned_data.xlsx')
-
-len(complete_df.columns)
+complete_df.to_csv('cleaned_data.csv', index=False)
