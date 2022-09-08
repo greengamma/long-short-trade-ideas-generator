@@ -7,3 +7,4 @@ raw_data/
 **/__pycache__/
 .env
 build/scripts-3.8/long-short-trade-ideas-generator-run
+
