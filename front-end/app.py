@@ -17,16 +17,12 @@ def init():
     #-------------------------------------------------------------
     data_retrieval = Data()
 
-    ratios = pd.read_excel('raw_data/cleaned_data.xlsx').drop(['Unnamed: 0'],
-                                                              axis=1)
+    ratios = pd.read_excel('raw_data/cleaned_data.xlsx')
     tickers = pd.read_csv('raw_data/tickers.csv')
     prices = pd.read_excel('raw_data/weekly_prices.xlsx')
-    sma10 = pd.read_excel('raw_data/sma_10_days.xlsx').drop(['Unnamed: 0'],
-                                                            axis=1)
-    sma20 = pd.read_excel('raw_data/sma_20_days.xlsx').drop(['Unnamed: 0'],
-                                                            axis=1)
-    sma60 = pd.read_excel('raw_data/sma_60_days.xlsx').drop(['Unnamed: 0'],
-                                                            axis=1)
+    sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
+    sma20 = pd.read_excel('raw_data/sma_20_days.xlsx')
+    sma60 = pd.read_excel('raw_data/sma_60_days.xlsx')
     prediction = pd.read_csv('raw_data/CNN_preds.csv')
 
     #Function to merge stock data for plotting
@@ -53,16 +49,14 @@ def init():
 data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions = init(
 )
 
-
 #########################################################################################
 #defines local style sheet
-def local_css(file_name):
-    with open(file_name) as f:
-        st.markdown('<style>{}</style>'.format(f.read()),
-                    unsafe_allow_html=True)
+# def local_css(file_name):
+#     with open(file_name) as f:
+#         st.markdown('<style>{}</style>'.format(f.read()),
+#                     unsafe_allow_html=True)
 
-
-local_css("style.css")
+# local_css("style.css")
 
 #--------------------------
 #Callback functions

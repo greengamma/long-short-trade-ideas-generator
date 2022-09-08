@@ -7,7 +7,7 @@ from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers.convolutional import Conv1D
 from keras.layers.convolutional import MaxPooling1D
-from datetime import timedelta, date
+import datetime
 
 
 class CNN_model():
@@ -17,7 +17,7 @@ class CNN_model():
 
     def get_data(self, file_location):
         ''' retrieves data from csv returns dataframe'''
-        return pd.read_csv(file_location)
+        return pd.read_excel(file_location)
 
     def seperate_ratios(self, ratios_df):
         '''Seperates the ratios into lists and returns a library of the lists with column name as the key and list as value'''
@@ -89,16 +89,14 @@ class CNN_model():
         return fitted_model.predict(X_test, verbose=0)
 
     def save_predictions(self, predictions):
-        ratios = pd.read_csv('raw_data/ratios.csv')
+        ratios = pd.read_excel('raw_data/cleaned_data.xlsx')
         ratios['Date'] = pd.to_datetime(ratios['Date'])
-
-        df = pd.DataFrame()
-        df['Preds'] = predictions[0]
-        df['Date'] = 1
-        for i in range(len(predictions[0])):
-            df['Date'].iloc[i] = (ratios['Date'].iat[-1] +
-                                  timedelta(days=i + 1)).strftime('%Y-%m-%d')
-        df.to_csv(f'raw_data/CNN_preds.csv')
+        start_date = (ratios['Date'].iloc[-1] +
+                      datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        end_date = (ratios['Date'].iloc[-1] +
+                    datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        df['Date'] = pd.date_range(start_date, end_date)
+        df['prediction'] = predictions
 
 
 if __name__ == '__main__':
