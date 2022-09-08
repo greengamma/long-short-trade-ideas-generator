@@ -28,7 +28,12 @@ df = pd.concat(price_list, axis=1)
 df = df.loc[:, ~df.columns.duplicated()].copy()
 
 df.set_index('Date', inplace=True)
-ratio_df = pd.concat([df[df.columns.difference([col])].div(df.where(df !=0, np.nan)[col], axis=0)\.add_suffix("_" + col) for col in df.columns], axis=1)
+ratio_df = pd.concat([
+    df[df.columns.difference([col])].div(df.where(df != 0, np.nan)[col],
+                                         axis=0).add_suffix("_" + col)
+    for col in df.columns
+],
+                     axis=1)
 
 # 3. Compute daily price change in %
 ## compute the % change of the ratio between today and yesterday for the last X days
@@ -104,6 +109,6 @@ increasing_trend_df = new_df.iloc[:, increasing_trend_list]
 df_positiveRatios.reset_index(inplace=True)
 complete_df = df_positiveRatios[increasing_trend_df.columns]
 
-complete_df.to_excel('cleaned_data.xlsx')
+complete_df.to_csv('raw_data/cleaned_data.csv')
 
 len(complete_df.columns)

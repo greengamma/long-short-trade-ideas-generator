@@ -154,10 +154,10 @@ class Data:
 
 if __name__ == '__main__':
     data = Data()
-    # tickers = data.get_tickers()
-    # print('tickers made')
-    # prices = data.get_prices(tickers, time_period="3mo")
-    # print('prices calculated')
+    tickers = data.get_tickers()
+    print('tickers made')
+    prices = data.get_prices(tickers, time_period="3mo")
+    print('prices calculated')
     ratios = data.get_ratios(10)
     print('ratios calculated')
     print(ratios)

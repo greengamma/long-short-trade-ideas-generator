@@ -27,6 +27,7 @@ def init():
                                                             axis=1)
     sma60 = pd.read_excel('raw_data/sma_60_days.xlsx').drop(['Unnamed: 0'],
                                                             axis=1)
+    prediction = pd.read_csv('raw_data/CNN_preds.csv')
 
     #Function to merge stock data for plotting
     def merge(prices, stockA, stockB):
@@ -44,13 +45,16 @@ def init():
 
     ## Stock Dictionary currently not upto date will need to update with current stock data.
 
-    return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60
+    prediction = pd.read_csv('raw_data/CNN_preds.csv')
+
+    return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction
 
 
-data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60 = init(
+data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions = init(
 )
 
 
+#########################################################################################
 #defines local style sheet
 def local_css(file_name):
     with open(file_name) as f:
@@ -118,10 +122,12 @@ for i, tab in enumerate(tabs):
             avg10, = ax2.plot(data['Date'], sma10[sma10.columns[i]])
             avg20, = ax2.plot(data['Date'], sma20[sma20.columns[i]])
             avg60, = ax2.plot(data['Date'], sma60[sma60.columns[i]])
-            ax2.legend(handles=[ratio, avg10, avg20, avg60],
+            preds, = ax2.plot(pd.to_datetime(predictions['Date']),
+                              predictions['Preds'])
+            ax2.legend(handles=[ratio, avg10, avg20, avg60, preds],
                        labels=[
                            'daily ratio', '10 day average', '20 day average',
-                           '60 day average'
+                           '60 day average', 'Prediction'
                        ],
                        loc='upper left',
                        fontsize=10)
@@ -130,13 +136,13 @@ for i, tab in enumerate(tabs):
             ax2.set_ylabel('Ratio')
             ax2.grid(True)
             plt.gca().xaxis.set_major_formatter(
-                mdates.DateFormatter('%m/%d/%Y'))
+                mdates.DateFormatter('%d/%m/%Y'))
             plt.gca().xaxis.set_major_locator(
                 mdates.WeekdayLocator(byweekday=(FR)))
             #display as graph option to discuss
-            # st.pyplot(fig)
+            # st.pyplot(fig2)
 
-            #Converts graph into png for display due to constraints around figsize in streamlit
+            # Converts graph into png for display due to constraints around figsize in streamlit
             buf = BytesIO()
             fig2.savefig(buf, format="png")
             st.image(buf)
