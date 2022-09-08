@@ -6,4 +6,5 @@ raw_data/
 *.csv
 **/__pycache__/
 .env
-build/
+build/scripts-3.8/long-short-trade-ideas-generator-run
+
