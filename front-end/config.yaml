@@ -1,0 +1,25 @@
+credentials:
+  usernames:
+    sbird:
+      email: s.bird389@gmail.com
+      name: Sam Bird
+      password: $2b$12$ZqZsG4HN.BV50nDYgnX3ROaiQpTcg/r0FoKnwYrG.h4vbKuFD2Ium # To be replaced with hashed password
+    rkumsta:
+      email: rbriggs@gmail.com
+      name: Rene Kumsta
+      password: $2b$12$0.bo3/x8r8NCD8liULAGp.YFM.2kn9e/Fo8bqOLBj0ghIUOsQpmCG # To be replaced with hashed password
+    hdellicor:
+      email: rbriggs@gmail.com
+      name: Hadrien Dellicour
+      password: $2b$12$pwOYToc0N.Y2mcE0v8IbveEsgP2hZ0rh81Sr47zpe2cnBddo1qUoW # To be replaced with hashed password
+    sritter:
+      email: rbriggs@gmail.com
+      name: Simone Ritter
+      password: 1qDxJvteOfenPZTprjepq66i9ikrpyXCuyOOEE3SK3kOG/IZoK # To be replaced with hashed password
+cookie:
+  expiry_days: 30
+  key: some_signature_key
+  name: some_cookie_name
+preauthorized:
+  emails:
+  - sbird389@gmail.com

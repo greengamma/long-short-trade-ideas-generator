@@ -22,7 +22,7 @@ class Data:
         tickers = tickers.tolist()
         return tickers
 
-    def get_prices(self, tickers, time_period="6mo"):
+    def get_prices(self, tickers, time_period):
         '''gets prices from yfinance for time_period for each ticker in arg list'''
         price_list = []
         for ticker in tickers:
@@ -32,9 +32,9 @@ class Data:
             price_list.append(stock)
             df = pd.concat(price_list, axis=1)
             df = df.loc[:, ~df.columns.duplicated()].copy()
-            df.set_index('Date', inplace=True)
+            # df.set_index('Date', inplace=True)
 
-        df.to_excel('raw_data/weekly_prices.xlsx')
+        df.to_excel('raw_data/weekly_prices.xlsx', index=False)
         return df
 
     def get_ratios(self, wk_count):
@@ -123,7 +123,7 @@ class Data:
         df_positiveRatios.reset_index(inplace=True)
         complete_df = df_positiveRatios[increasing_trend_df.columns]
         # complete_df.drop('Unnamed: 0', axis=1)
-        complete_df.to_excel('raw_data/cleaned_data.xlsx')
+        complete_df.to_excel('raw_data/cleaned_data.xlsx', index=False)
         print('completed ratios')
         return complete_df
 
@@ -138,26 +138,29 @@ class Data:
     def create_SMA(self, days):
         '''Creates Simple moving average for all ratios given for x days'''
         ratios_df = pd.read_excel('raw_data/cleaned_data.xlsx')
-
-        no_dates = ratios_df.drop(['Date', 'Unnamed: 0'], axis=1)
-        SMA = pd.DataFrame()
-        i = 0
-        for column in no_dates.columns:
-            col = no_dates[column].rolling(days).sum() / days
-            insert_index = i
-            column_name = f'{column}_SMA_{days}_days'
-            SMA.insert(insert_index, column_name, col)
-            i = i + 1
-        SMA.to_excel(f'raw_data/sma_{days}_days.xlsx')
-        return SMA
+        if len(ratios_df['Date']) < days:
+            return None
+        else:
+            no_dates = ratios_df.drop(['Date'], axis=1)
+            SMA = pd.DataFrame()
+            i = 0
+            for column in no_dates.columns:
+                col = no_dates[column].rolling(days).sum() / days
+                insert_index = i
+                column_name = f'{column}_SMA_{days}_days'
+                SMA.insert(insert_index, column_name, col)
+                i = i + 1
+            # SMA2 = SMA.iloc[days:]
+            SMA.to_excel(f'raw_data/sma_{days}_days.xlsx', index=False)
+            return SMA
 
 
 if __name__ == '__main__':
     data = Data()
     tickers = data.get_tickers()
     print('tickers made')
-    prices = data.get_prices(tickers, time_period="3mo")
+    prices = data.get_prices(tickers, time_period="24mo")
     print('prices calculated')
-    ratios = data.get_ratios(10)
+    ratios = data.get_ratios(6)
     print('ratios calculated')
     print(ratios)
