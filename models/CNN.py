@@ -48,8 +48,6 @@ class CNN_model():
     def test_train_splits(self, X, y):
         X_train = X[0:X.shape[0] - 1]
         X_test = X[X.shape[0] - 1:]
-        X_train.shape
-        X_test.shape
         y_train = y[0:y.shape[0] - 1]
         y_test = y[y.shape[0] - 1:]
 
@@ -88,15 +86,15 @@ class CNN_model():
     def make_prediction(self, fitted_model, X_test):
         return fitted_model.predict(X_test, verbose=0)
 
-    def save_predictions(self, predictions):
-        ratios = pd.read_excel('raw_data/cleaned_data.xlsx')
-        ratios['Date'] = pd.to_datetime(ratios['Date'])
-        start_date = (ratios['Date'].iloc[-1] +
-                      datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-        end_date = (ratios['Date'].iloc[-1] +
-                    datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-        df['Date'] = pd.date_range(start_date, end_date)
-        df['prediction'] = predictions
+    # def save_predictions(self, predictions):
+    #     ratios = pd.read_excel('raw_data/cleaned_data.xlsx')
+    #     ratios['Date'] = pd.to_datetime(ratios['Date'])
+    #     start_date = (ratios['Date'].iloc[-1] +
+    #                   datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+    #     end_date = (ratios['Date'].iloc[-1] +
+    #                 datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+    #     df['Date'] = pd.date_range(start_date, end_date)
+    #     df['prediction'] = predictions
 
 
 if __name__ == '__main__':

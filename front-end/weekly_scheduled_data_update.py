@@ -17,7 +17,7 @@ data = Data()
 CNN = CNN_model()
 df = CNN.get_data('raw_data/cleaned_data.xlsx').dropna(axis=1)
 ## takes first 10 ratios
-df_short = df.iloc[:, :11].set_index('Date')
+df_short = df.iloc[:, :6].set_index('Date')
 seperate_ratios = CNN.seperate_ratios(df)
 all_predictions_cnn = pd.DataFrame()
 model = CNN.create_model(200, 30)

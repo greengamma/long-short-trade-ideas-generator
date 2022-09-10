@@ -1,4 +1,9 @@
+from dateutil.relativedelta import relativedelta, FR
+
 import streamlit as st
+import streamlit_authenticator as stauth
+import yaml
+import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,7 +22,8 @@ def init():
     #-------------------------------------------------------------
     data_retrieval = Data()
 
-    ratios = pd.read_excel('raw_data/cleaned_data.xlsx')
+    ratios = pd.read_excel('raw_data/cleaned_data.xlsx').dropna(
+        axis=1).iloc[:, :11]
     tickers = pd.read_csv('raw_data/tickers.csv')
     prices = pd.read_excel('raw_data/weekly_prices.xlsx')
     sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
@@ -41,8 +47,6 @@ def init():
 
     ## Stock Dictionary currently not upto date will need to update with current stock data.
 
-    prediction = pd.read_csv('raw_data/CNN_preds.csv')
-
     return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction
 
 
@@ -59,84 +63,196 @@ data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma
 # local_css("style.css")
 
 #--------------------------
-#Callback functions
+#Auth Requirements
 #--------------------------
+
+with open('front-end/config.yaml') as file:
+    config = yaml.load(file, Loader=stauth.SafeLoader)
+
+authenticator = stauth.Authenticate(config['credentials'],
+                                    config['cookie']['name'],
+                                    config['cookie']['key'],
+                                    config['cookie']['expiry_days'],
+                                    config['preauthorized'])
 
 #----------------------------------------------------------------------------
 #SIDEBAR
 #----------------------------------------------------------------------------
-st.title('HedgeFinder')
 
-add_sidebar_title = st.sidebar.title('Filter Options')
+with st.sidebar:
 
-add_selectbox = st.sidebar.selectbox("Industry", ("A", "B", "C"),
-                                     key='option1')
+    name, authentication_status, username = authenticator.login(
+        'Login', 'main')
 
-add_sidebar_button = st.sidebar.button('Filter')
-
+    # if authentication_status:
+    #     try:
+    #         if authenticator.reset_password(username, 'Reset password'):
+    #             st.success('Password modified successfully')
+    #     except Exception as e:
+    #         st.error(e)
+#-----------------------------------------------------------------------------
+#Title
+#-----------------------------------------------------------------------------
+st.title('HedgeInvest')
 #-----------------------------------------------------------------------------
 #Tabs
 #-----------------------------------------------------------------------------
-hedges = []
-for i in range(merged_length):
-    hedges.append(f'Long: {hedge_pairs[i][0]} / Short: {hedge_pairs[i][1]} ')
+if authentication_status:
+    authenticator.logout('Logout', 'main')
 
-tabs = st.tabs(hedges)
-#runs through all stocks pairs and adds a tab for each with relevant graphs
-for i, tab in enumerate(tabs):
-    with tabs[i]:
-        st.header(f'{hedge_pairs[i][0]} and {hedge_pairs[i][1]}')
-        col1, col2 = st.columns(2, gap="small")
-        with col1:
-            st.header('Stock Price')
-            # plot both stocks last 3 months data
-            fig1, ax1 = plt.subplots(figsize=(10, 6))
-            stocks_data = merged[i].drop('Date', axis=1)
-            ax1.plot(merged[i]['Date'], stocks_data)
-            ax1.set_xlabel('Date')
-            ax1.set_ylabel('Price')
-            fig1.autofmt_xdate()
-            ax1.grid(True)
-            plt.gca().xaxis.set_major_formatter(
-                mdates.DateFormatter('%m/%d/%Y'))
-            plt.gca().xaxis.set_major_locator(
-                mdates.WeekdayLocator(byweekday=(FR)))
-            #display as graph option to discuss
-            # st.pyplot(fig)
+    hedges = []
+    for i in range(merged_length):
+        hedges.append(
+            f'Long: {hedge_pairs[i][0]} / Short: {hedge_pairs[i][1]} ')
 
-            #Converts graph into png for display due to constraints around figsize in stramlit
-            buf = BytesIO()
-            fig1.savefig(buf, format="png")
-            st.image(buf)
-        with col2:
-            st.header('Ratio')
-            fig2, ax2 = plt.subplots(figsize=(10, 6))
-            fig2.autofmt_xdate()
-            ratio, = ax2.plot(data['Date'], data[data.columns[i + 1]])
-            avg10, = ax2.plot(data['Date'], sma10[sma10.columns[i]])
-            avg20, = ax2.plot(data['Date'], sma20[sma20.columns[i]])
-            avg60, = ax2.plot(data['Date'], sma60[sma60.columns[i]])
-            preds, = ax2.plot(pd.to_datetime(predictions['Date']),
-                              predictions['Preds'])
-            ax2.legend(handles=[ratio, avg10, avg20, avg60, preds],
-                       labels=[
-                           'daily ratio', '10 day average', '20 day average',
-                           '60 day average', 'Prediction'
-                       ],
-                       loc='upper left',
-                       fontsize=10)
-            # ax2.set_ylim([0, 1])
-            ax2.set_xlabel('Date')
-            ax2.set_ylabel('Ratio')
-            ax2.grid(True)
-            plt.gca().xaxis.set_major_formatter(
-                mdates.DateFormatter('%d/%m/%Y'))
-            plt.gca().xaxis.set_major_locator(
-                mdates.WeekdayLocator(byweekday=(FR)))
-            #display as graph option to discuss
-            # st.pyplot(fig2)
+    tabs = st.tabs(hedges)
+    #runs through all stocks pairs and adds a tab for each with relevant graphs
+    for i, tab in enumerate(tabs):
+        with tabs[i]:
+            st.header(f'{hedge_pairs[i][0]} and {hedge_pairs[i][1]}')
+            col1, col2 = st.columns(2, gap="small")
+            with col1:
+                st.header('Stock Price')
+                # plot both stocks last 3 months data
+                fig1, ax1 = plt.subplots(figsize=(10, 6))
+                stocks_data = merged[i].drop('Date', axis=1)
+                stock1, = ax1.plot(merged[i]['Date'],
+                                   stocks_data[stocks_data.columns[0]],
+                                   color='green')
 
-            # Converts graph into png for display due to constraints around figsize in streamlit
-            buf = BytesIO()
-            fig2.savefig(buf, format="png")
-            st.image(buf)
+                ##Axis info for date config
+                fig1.autofmt_xdate()
+                ax1.grid(True)
+                plt.gca().xaxis.set_major_formatter(
+                    mdates.DateFormatter('%d/%m/%Y'))
+                plt.gca().xaxis.set_major_locator(
+                    mdates.WeekdayLocator(byweekday=(FR)))
+                ax1.set_xlim([data['Date'].iat[-60], data['Date'].iat[-1]])
+                ##twin axes to plot different y axis due to large differences in stock prices
+                ax1b = ax1.twinx()
+                stock2, = ax1b.plot(merged[i]['Date'],
+                                    stocks_data[stocks_data.columns[1]],
+                                    color='red')
+
+                ##Axis info
+                ax1.set_xlabel('Date')
+                ax1.set_ylabel(f'Price for {hedge_pairs[i][0]}')
+                ax1.set_ylabel(f'Price for {hedge_pairs[i][0]}',
+                               color="green",
+                               fontsize=10)
+                ax1b.set_ylabel(f'Price for {hedge_pairs[i][1]}',
+                                color="red",
+                                fontsize=10)
+                ##Legend Info
+
+                ax1.legend(
+                    handles=[stock1, stock2],
+                    labels=[f'{hedge_pairs[i][0]}', f'{hedge_pairs[i][1]}'],
+                    loc='upper left',
+                    fontsize=10)
+                #display as graph option to discuss
+                # st.pyplot(fig)
+
+                #Converts graph into png for display due to constraints around figsize in stramlit
+                buf = BytesIO()
+                fig1.savefig(buf, format="png")
+                st.image(buf)
+            with col2:
+                st.header('Ratio')
+                fig2, ax2 = plt.subplots(figsize=(10, 6))
+                fig2.autofmt_xdate()
+                ratio, = ax2.plot(data['Date'], data[data.columns[i + 1]])
+                # avg10, = ax2.plot(data['Date'], sma10[sma10.columns[i]])
+                # avg20, = ax2.plot(data['Date'], sma20[sma20.columns[i]])
+                # avg60, = ax2.plot(data['Date'], sma60[sma60.columns[i]])
+                preds, = ax2.plot(pd.to_datetime(predictions['Date']),
+                                  predictions[predictions.columns[i + 1]])
+                ax2.legend(
+                    handles=[
+                        ratio,
+                        # avg10,
+                        # avg20,
+                        # avg60,
+                        preds
+                    ],
+                    labels=[
+                        'Ratio',
+                        # '10 day average',
+                        # '20 day average',
+                        # '60 day average',
+                        'Prediction'
+                    ],
+                    loc='upper left',
+                    fontsize=10)
+                ##Sets X Limit to last 60 days up to including predictions
+                ax2.set_xlim([
+                    data['Date'].iat[-60],
+                    pd.to_datetime(predictions['Date'].iat[29])
+                ])
+                ax2.set_xlabel('Date')
+                ax2.set_ylabel('Ratio')
+                ax2.grid(True)
+                plt.gca().xaxis.set_major_formatter(
+                    mdates.DateFormatter('%d/%m/%Y'))
+                plt.gca().xaxis.set_major_locator(
+                    mdates.WeekdayLocator(byweekday=(FR)))
+                #display as graph option to discuss
+                # st.pyplot(fig2)
+
+                # Converts graph into png for display due to constraints around figsize in streamlit
+                buf = BytesIO()
+                fig2.savefig(buf, format="png")
+                st.image(buf)
+
+    ##########################################################################
+    #Section 2 ROI on this weeks hedge for last 6 weeks
+    ##########################################################################
+
+    st.markdown(
+        """<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """,
+        unsafe_allow_html=True)
+    st.header('ROI on this weeks hedges for last 6 weeks')
+    col3, col4 = st.columns(2, gap="small")
+
+    with col3:
+        st.header('Options')
+
+        number = st.slider(
+            label='Pick investment level',
+            min_value=100,
+            max_value=10_000,
+            step=100,
+        )
+
+    with col4:
+        st.header(f'Last Month')
+
+##########################################################################
+#Section 3 previous weeks suggestions current ROI
+##########################################################################
+
+    lastFriday = datetime.datetime.now() + relativedelta(weekday=FR(-1))
+    two_weeks = lastFriday - datetime.timedelta(days=7)
+    three_weeks = two_weeks - datetime.timedelta(days=7)
+    four_weeks = three_weeks - datetime.timedelta(days=7)
+    date = f'{lastFriday.day}-{lastFriday.month}-{lastFriday.year}'
+    date_two_weeks = f'{two_weeks.day}-{two_weeks.month}-{two_weeks.year}'
+    date_three_weeks = f'{three_weeks.day}-{three_weeks.month}-{three_weeks.year}'
+    date_four_weeks = f'{four_weeks.day}-{four_weeks.month}-{four_weeks.year}'
+
+    st.markdown(
+        """<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """,
+        unsafe_allow_html=True)
+
+    st.header(f'Hedges for {date} current ROI ')
+
+    st.header(f'Hedges for {date_two_weeks} current ROI ')
+
+    st.header(f'Hedges for {date_three_weeks} current ROI ')
+
+    st.header(f'Hedges for {date_four_weeks} current ROI ')
+
+elif authentication_status == False:
+    st.error('Username/password is incorrect')
+elif authentication_status == None:
+    st.warning('Please enter your username and password')
