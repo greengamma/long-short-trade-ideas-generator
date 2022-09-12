@@ -70,17 +70,17 @@ class ModelArima:
             mape_arima = np.mean(np.abs(forecast_df["predicted_mean"] - df_test)/np.abs(df_test))
             results.append(mape_arima)
 
-        summary = pd.DataFrame()
-        summary["ratio"] =  ratio_list
-        summary["MAPE"] = results
-        summary["MAPE"] = summary["MAPE"] * 100
-        return summary
+        mape_arima = pd.DataFrame()
+        mape_arima["ratio"] = ratio_list
+        mape_arima["MAPE"] = results
+        mape_arima["MAPE"] = mape_arima["MAPE"] * 100
+        return mape_arima
 
 
 if __name__ == '__main__':
     data = ModelArima()
     df = data.get_data()
     print('received data')
-    summary = data.run_model(df)
-    print('received summary')
-    print(summary)
+    mape_arima = data.run_model(df)
+    print('received mape_arima')
+    print(mape_arima)
