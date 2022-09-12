@@ -73,6 +73,7 @@ class ModelArima:
         summary = pd.DataFrame()
         summary["ratio"] =  ratio_list
         summary["MAPE"] = results
+        summary["MAPE"] = summary["MAPE"] * 100
         return summary
 
 
