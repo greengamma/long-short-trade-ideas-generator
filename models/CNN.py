@@ -22,7 +22,7 @@ class CNN_model():
     def seperate_ratios(self, ratios_df):
         '''Seperates the ratios into lists and returns a library of the lists with column name as the key and list as value'''
         df = ratios_df.copy()
-        df.set_index('Date', inplace=True)
+        # df.set_index('Date', inplace=True)
         ratios_dict = {}
         for columns in ratios_df:
             ratios_dict[columns] = ratios_df[columns].to_list()
@@ -48,6 +48,8 @@ class CNN_model():
     def test_train_splits(self, X, y):
         X_train = X[0:X.shape[0] - 1]
         X_test = X[X.shape[0] - 1:]
+        X_train.shape
+        X_test.shape
         y_train = y[0:y.shape[0] - 1]
         y_test = y[y.shape[0] - 1:]
 

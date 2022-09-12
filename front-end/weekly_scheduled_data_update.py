@@ -1,6 +1,7 @@
 from data.refactored_data import Data
 from models.CNN import CNN_model
 import pandas as pd
+import numpy as np
 import datetime
 
 data = Data()
@@ -8,34 +9,46 @@ data = Data()
 # Update Data
 # tickers = data.get_tickers()
 # prices = data.get_prices(tickers)
-# ratios = data.get_ratios(10)
+# ratios = data.get_ratios(6)
 # sma10 = data.create_SMA(10)
 # sma20 = data.create_SMA(20)
 # sma60 = data.create_SMA(60)
 
 # update CNN model
 CNN = CNN_model()
-df = CNN.get_data('raw_data/cleaned_data.xlsx').dropna(axis=1)
-## takes first 10 ratios
-df_short = df.iloc[:, :6].set_index('Date')
+##Get Data
+df = CNN.get_data('raw_data/ratios.xlsx')
+
+actual_start_date = (df['Date'].iloc[-1] +
+                     datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+actual_end_date = (df['Date'].iloc[-1] +
+                   datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+
+mape_predictions_cnn = pd.DataFrame()
+actual_predictions_cnn = pd.DataFrame()
+mape_predictions_cnn['Date'] = df['Date'].iloc[-31:-1]
+mape_predictions_cnn.reset_index(inplace=True, drop=True)
+actual_predictions_cnn['Date'] = pd.date_range(actual_start_date,
+                                               actual_end_date)
+df.drop('Date', inplace=True, axis=1)
+##create dictionary of ratios
 seperate_ratios = CNN.seperate_ratios(df)
-all_predictions_cnn = pd.DataFrame()
+#Create Model
 model = CNN.create_model(200, 30)
-df['Date'] = pd.to_datetime(df['Date'])
-start_date = (df['Date'].iloc[-1] +
-              datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-end_date = (df['Date'].iloc[-1] +
-            datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-all_predictions_cnn['Date'] = pd.date_range(start_date, end_date)
-all_predictions_cnn.to_csv('raw_data/CNN_preds.csv', index=False)
-for columns in df_short:
+for columns in df:
     X, y = CNN.split_sequence(seperate_ratios[columns], 200, 30)
     X_train, y_train, X_test, y_test = CNN.test_train_splits(X, y)
-    X_train, X_test = CNN.reshape(X_train, X_test, 200, 1)
-    CNN.fit_model(model, X_train, y_train, 1000)
-    predictions = CNN.make_prediction(model, X_test)
-    all_predictions_cnn[columns] = predictions[0]
-all_predictions_cnn.to_csv('raw_data/CNN_preds.csv', index=False)
-#Add Date Column
+    X_test_reshaped, X_train_reshaped = CNN.reshape(X_test, X_train, 200, 1)
+    CNN.fit_model(model, X_train_reshaped, y_train, 1000)
+    #Make prediction on known vals X_test
+    mape_predictions = CNN.make_prediction(model, X_test)
+    mape_predictions_cnn[columns] = mape_predictions[0]
+    #Make prediction on unknown vals
+    X_actual = np.array(seperate_ratios[columns][-200:]).reshape(1, 200, 1)
+    actual_predictions = CNN.make_prediction(model, X_actual)
+    actual_predictions_cnn[columns] = actual_predictions[0]
 
+mape_predictions_cnn.to_csv('raw_data/CNN_preds_mape.csv', index=False)
+actual_predictions_cnn.to_csv('raw_data/CNN_actual_prediction.csv',
+                              index=False)
 # lstm model

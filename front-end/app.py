@@ -26,8 +26,7 @@ def init():
     #-------------------------------------------------------------
     data_retrieval = Data()
 
-    ratios = pd.read_excel('raw_data/cleaned_data.xlsx').dropna(
-        axis=1).iloc[:, :11]
+    ratios = pd.read_excel('raw_data/ratios.xlsx').dropna(axis=1).iloc[:, :11]
     tickers = pd.read_excel('raw_data/ticks.xlsx')
     prices = pd.read_excel('raw_data/weekly_prices.xlsx')
     sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
