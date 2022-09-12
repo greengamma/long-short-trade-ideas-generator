@@ -1,3 +1,4 @@
+from pickletools import read_stringnl_noescape
 from dateutil.relativedelta import relativedelta, FR
 
 import streamlit as st
@@ -7,10 +8,13 @@ import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from io import BytesIO
-from data.refactored_data import Data
 import matplotlib.dates as mdates
+from io import BytesIO
 from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
+from data.ticker_name_industry import tickers_to_name
+from data.refactored_data import Data
+from data.performance import create_pls
+# from data.ticker_name_industry import ticker_names
 # Uses entire screen width
 st.set_page_config(layout="wide")
 
@@ -24,7 +28,7 @@ def init():
 
     ratios = pd.read_excel('raw_data/cleaned_data.xlsx').dropna(
         axis=1).iloc[:, :11]
-    tickers = pd.read_csv('raw_data/tickers.csv')
+    tickers = pd.read_excel('raw_data/ticks.xlsx')
     prices = pd.read_excel('raw_data/weekly_prices.xlsx')
     sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
     sma20 = pd.read_excel('raw_data/sma_20_days.xlsx')
@@ -45,12 +49,16 @@ def init():
         merged.append(merge(prices, pairs[0], pairs[1]))
     merged_length = len(merged)
 
-    ## Stock Dictionary currently not upto date will need to update with current stock data.
+    ## Makes Dictionary of tickers(keys) to names(vals)
+    long_names, short_names = tickers_to_name(ratios)
 
-    return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction
+    # Makes a dictionary of profit and loss for current ratios for last 1 and three months
+    one_month_pl, three_month_pl = create_pls(10_000, ratios)
+
+    return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction, long_names, short_names, one_month_pl, three_month_pl
 
 
-data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions = init(
+data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions, long_names, short_names, one_month_pl, three_month_pl = init(
 )
 
 #########################################################################################
@@ -109,10 +117,24 @@ if authentication_status:
     #runs through all stocks pairs and adds a tab for each with relevant graphs
     for i, tab in enumerate(tabs):
         with tabs[i]:
-            st.header(f'{hedge_pairs[i][0]} and {hedge_pairs[i][1]}')
+            header_col_1, header_col_2 = st.columns(2, gap='small')
+            with header_col_1:
+                st.header(
+                    f'{long_names[hedge_pairs[i][0]]} ({hedge_pairs[i][0]})')
+                st.subheader(
+                    f'in {symbols.loc[symbols["ticker"] == hedge_pairs[i][0],"industry" ].iloc[0]}'
+                )
+
+            with header_col_2:
+                st.header(
+                    f'{short_names[hedge_pairs[i][1]]} ({hedge_pairs[i][1]})')
+                st.subheader(
+                    f'in {symbols.loc[symbols["ticker"] == hedge_pairs[i][1],"industry" ].iloc[0]}'
+                )
+
             col1, col2 = st.columns(2, gap="small")
             with col1:
-                st.header('Stock Price')
+                st.header('Stock Prices')
                 # plot both stocks last 3 months data
                 fig1, ax1 = plt.subplots(figsize=(10, 6))
                 stocks_data = merged[i].drop('Date', axis=1)
@@ -138,10 +160,10 @@ if authentication_status:
                 ax1.set_xlabel('Date')
                 ax1.set_ylabel(f'Price for {hedge_pairs[i][0]}')
                 ax1.set_ylabel(f'Price for {hedge_pairs[i][0]}',
-                               color="green",
+                               color="black",
                                fontsize=10)
                 ax1b.set_ylabel(f'Price for {hedge_pairs[i][1]}',
-                                color="red",
+                                color="purple",
                                 fontsize=10)
                 ##Legend Info
 
@@ -158,7 +180,7 @@ if authentication_status:
                 fig1.savefig(buf, format="png")
                 st.image(buf)
             with col2:
-                st.header('Ratio')
+                st.header('Current Ratio and prediction')
                 fig2, ax2 = plt.subplots(figsize=(10, 6))
                 fig2.autofmt_xdate()
                 ratio, = ax2.plot(data['Date'], data[data.columns[i + 1]])
@@ -208,25 +230,34 @@ if authentication_status:
     #Section 2 ROI on this weeks hedge for last 6 weeks
     ##########################################################################
 
-    st.markdown(
-        """<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """,
-        unsafe_allow_html=True)
-    st.header('ROI on this weeks hedges for last 6 weeks')
-    col3, col4 = st.columns(2, gap="small")
+            st.markdown(
+                """<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """,
+                unsafe_allow_html=True)
+            st.header(
+                'ROI on this weeks hedges for last month and three months')
+            col3, col4 = st.columns(2, gap="small")
 
-    with col3:
-        st.header('Options')
+            with col3:
+                st.subheader('Options')
 
-        number = st.slider(
-            label='Pick investment level',
-            min_value=100,
-            max_value=10_000,
-            step=100,
-        )
+                number = 100
+                number = st.slider(label='Pick investment level',
+                                   min_value=100,
+                                   max_value=10_000,
+                                   step=100,
+                                   on_change=create_pls,
+                                   args=(number, data),
+                                   key=f'slider{i}')
 
-    with col4:
-        st.header(f'Last Month')
-
+            with col4:
+                st.header('One Month')
+                st.text(
+                    f'{one_month_pl[f"{hedge_pairs[i][0]}_{hedge_pairs[i][1]}"]}'
+                )
+                st.header('Three Months')
+                st.text(
+                    f'{three_month_pl[f"{hedge_pairs[i][0]}_{hedge_pairs[i][1]}"]}'
+                )
 ##########################################################################
 #Section 3 previous weeks suggestions current ROI
 ##########################################################################
