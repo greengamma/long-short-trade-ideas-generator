@@ -204,7 +204,8 @@ class ModelXGBoost:
             mape_dict.update(self.train_xgb_with_prophet_features(ratio_df))
             col_l += 5
             col_r += 5
-        return mape_dict
+        mape_xgb_reg = pd.DataFrame(mape_dict.items(), columns=['ratio', 'MAPE'])
+        return mape_xgb_reg
 
 
 if __name__ == '__main__':
@@ -215,6 +216,6 @@ if __name__ == '__main__':
     rsi_14_df = data.create_rsi(df)
     print('rsi computed')
     sorted_df = data.concatenate_df(sma_10_df, sma_20_df, sma_60_df, rsi_14_df)
-    mape = data.run_model(sorted_df)
-    print('mape received')
-    print(mape)
+    mape_xgb_reg = data.run_model(sorted_df)
+    print('received mape_xgb_reg')
+    print(mape_xgb_reg)

@@ -137,13 +137,15 @@ class ModelLstm:
                 mape = self.generate_model(X_train, y_train, X_val, y_val, X_test, y_test)
                 mape_dict[ratio] = round(mape, 3)
 
-        return mape_dict
+        mape_lstm = pd.DataFrame(mape_dict.items(), columns=['ratio', 'MAPE'])
+        return mape_lstm
 
 
 if __name__ == '__main__':
     data = ModelLstm()
     df = data.get_data()
     print('data received')
-    mape = data.run_model(df)
-    print('mape received')
-    print(mape)
+    mape_lstm = data.run_model(df)
+    print('mape_lstm received')
+    print(mape_lstm)
+    print(type(mape_lstm))
