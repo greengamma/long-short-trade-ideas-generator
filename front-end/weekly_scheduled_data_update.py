@@ -7,6 +7,8 @@ import datetime
 
 data = Data()
 
+#Shuffle Data:
+
 # Update Data
 # tickers = data.get_tickers()
 # prices = data.get_prices(tickers)
@@ -20,10 +22,10 @@ CNN = CNN_model()
 ##Get Data
 df = CNN.get_data('raw_data/ratios.xlsx')
 
-# actual_start_date = (df['Date'].iloc[-1] +
-#                      datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-# actual_end_date = (df['Date'].iloc[-1] +
-#                    datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+actual_start_date = (df['Date'].iloc[-1] +
+                     datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+actual_end_date = (df['Date'].iloc[-1] +
+                   datetime.timedelta(days=30)).strftime("%Y-%m-%d")
 
 # mape_predictions_cnn = pd.DataFrame()
 # actual_predictions_cnn = pd.DataFrame()
@@ -51,10 +53,47 @@ df = CNN.get_data('raw_data/ratios.xlsx')
 
 # mape_predictions_cnn.to_csv('raw_data/CNN_preds_mape.csv', index=False)
 # actual_predictions_cnn.to_csv('raw_data/CNN_actual_prediction.csv',
-#                               index=False)
+#                           index=False)
+
+# CNN_df = pd.read_csv('raw_data/CNN_preds_mape.csv')
+ratios_df = pd.read_excel('raw_data/ratios.xlsx')
+
+# CNN_mapes = CNN.make_mape(CNN_df, ratios_df)
+# CNN_mapes.to_csv('raw_data/CNN_mapes.csv', index=False)
+
 # Arima model
 arima = Arima_model()
 mape = arima.run_model(df, 30)
 actual = arima.run_model(df, 0)
-mape.to_csv('raw_data/Arima_preds_mape.csv')
-actual.to_csv('raw_data/Arima_actual_predictions.csv')
+
+mape['Date'] = list(df['Date'].iloc[-30:])
+actual['Date'] = pd.date_range(actual_start_date, actual_end_date)
+##Move date to the first column
+first_column = mape.pop('Date')
+mape.insert(0, 'Date', first_column)
+
+first_column = actual.pop('Date')
+actual.insert(0, 'Date', first_column)
+
+mape.to_csv('raw_data/Arima_preds_mape.csv', index=False)
+actual.to_csv('raw_data/Arima_actual_predictions.csv', index=False)
+Arima_df = pd.read_csv('raw_data/Arima_preds_mape.csv')
+Arima_mapes = CNN.make_mape(Arima_df, ratios_df)
+Arima_mapes.to_csv('raw_data/Arima_mapes.csv', index=False)
+
+#LSTM
+#run model
+#make 30 day predictions on df
+# save predictions to {model_name}.csv
+
+#XGB_BOOST
+#run model
+#make 30 day predictions on df
+# save predictions to {model_name}.csv
+
+#RNN
+#run model
+#make 30 day predictions on df
+# save predictions to {model_name}.csv
+
+##MAPE Calculations

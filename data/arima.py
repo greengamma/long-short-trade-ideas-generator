@@ -22,7 +22,7 @@ class Arima_model:
 
     # import data
     def get_data(self):
-        df = pd.read_excel('../raw_data/ratios.xlsx')
+        df = pd.read_excel('raw_data/ratios.xlsx')
         return df
 
     def run_model(self, df_init, test_size):
@@ -72,9 +72,9 @@ class Arima_model:
 
 
 if __name__ == '__main__':
-    data = ModelArima()
+    data = Arima_model()
     df = data.get_data()
     print('received data')
-    mape_arima = data.run_model(df)
+    mape_arima = data.run_model(df, 30)
     print('received mape_arima')
     print(mape_arima)
