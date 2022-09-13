@@ -18,57 +18,60 @@ from data.performance import create_pls
 # Uses entire screen width
 st.set_page_config(layout="wide")
 
+with st.spinner('Loading Data...'):
 
-@st.cache
-def init():
-    #-------------------------------------------------------------
-    # Data Retrieval
-    #-------------------------------------------------------------
-    data_retrieval = Data()
+    @st.cache
+    def init():
+        #-------------------------------------------------------------
+        # Data Retrieval
+        #-------------------------------------------------------------
+        data_retrieval = Data()
 
-    ratios = pd.read_excel('raw_data/ratios.xlsx').dropna(axis=1).iloc[:, :11]
-    tickers = pd.read_excel('raw_data/ticks.xlsx')
-    prices = pd.read_excel('raw_data/weekly_prices.xlsx')
-    sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
-    sma20 = pd.read_excel('raw_data/sma_20_days.xlsx')
-    sma60 = pd.read_excel('raw_data/sma_60_days.xlsx')
-    prediction_actual = pd.read_csv('raw_data/CNN_actual_prediction.csv')
-    prediction_mape = pd.read_csv('raw_data/CNN_preds_mape.csv')
+        ratios = pd.read_excel('raw_data/ratios.xlsx').dropna(
+            axis=1).iloc[:, :11]
+        tickers = pd.read_excel('raw_data/ticks.xlsx')
+        prices = pd.read_excel('raw_data/weekly_prices.xlsx')
+        sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
+        sma20 = pd.read_excel('raw_data/sma_20_days.xlsx')
+        sma60 = pd.read_excel('raw_data/sma_60_days.xlsx')
+        prediction_actual = pd.read_csv('raw_data/CNN_actual_prediction.csv')
+        prediction_mape = pd.read_csv('raw_data/CNN_preds_mape.csv')
 
-    #Function to merge stock data for plotting
-    def merge(prices, stockA, stockB):
-        merged_stocks = prices[['Date', stockA, stockB]]
-        return merged_stocks
+        #Function to merge stock data for plotting
+        def merge(prices, stockA, stockB):
+            merged_stocks = prices[['Date', stockA, stockB]]
+            return merged_stocks
 
-    ##Splits column names and returns list of this weeks hedge pairs
-    hedge_pairs = data_retrieval.split_hedge_names(ratios)
+        ##Splits column names and returns list of this weeks hedge pairs
+        hedge_pairs = data_retrieval.split_hedge_names(ratios)
 
-    #merges stock data for each hedge into one for plotting
-    merged = []
-    for pairs in hedge_pairs:
-        merged.append(merge(prices, pairs[0], pairs[1]))
-    merged_length = len(merged)
+        #merges stock data for each hedge into one for plotting
+        merged = []
+        for pairs in hedge_pairs:
+            merged.append(merge(prices, pairs[0], pairs[1]))
+        merged_length = len(merged)
 
-    ## Makes Dictionary of tickers(keys) to names(vals)
-    long_names, short_names = tickers_to_name(ratios)
+        ## Makes Dictionary of tickers(keys) to names(vals)
+        long_names, short_names = tickers_to_name(ratios)
 
-    # Makes a dictionary of profit and loss for current ratios for last 1 and three months
-    one_month_pl, three_month_pl = create_pls(10_000, ratios)
+        # Makes a dictionary of profit and loss for current ratios for last 1 and three months
+        one_month_pl, three_month_pl = create_pls(10_000, ratios)
 
-    return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl
+        return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl
 
+    data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl = init(
+    )
 
-data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl = init(
-)
 
 #########################################################################################
 #defines local style sheet
-# def local_css(file_name):
-#     with open(file_name) as f:
-#         st.markdown('<style>{}</style>'.format(f.read()),
-#                     unsafe_allow_html=True)
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown('<style>{}</style>'.format(f.read()),
+                    unsafe_allow_html=True)
 
-# local_css("style.css")
+
+local_css("front-end/style.css")
 
 #--------------------------
 #Auth Requirements

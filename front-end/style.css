@@ -1,0 +1,59 @@
+.stApp {
+  /* background-image: url("https://images.unsplash.com/photo-1618650551428-199e32d38059?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1171&q=80"); */
+  background-attachment: fixed;
+  background-size: cover
+}
+
+.css-18ni7ap.e8zbici2 {
+  background-color: blue;
+}
+
+.css-1cpxqw2.edgvbvh9 {
+  background-color: blue;
+  color: white
+}
+
+.st-dd>div>button {
+  background-color: blue;
+  color: white;
+  border-radius: 10%;
+  padding-left: .8rem;
+  padding-right: .8rem;
+
+}
+
+.st-dd>div>button:hover {
+  background-color: white;
+  color: blue;
+}
+
+.st-dd>div>button:focus {
+  background-color: white;
+  color: blue;
+}
+
+#root>div:nth-child(1)>div.withScreencast>div>div>div>section>div>div:nth-child(1)>div>div.stTabs.css-p5arxg.exp6ofz0>div>div.st-de.st-b4.st-df.st-dg.st-dh.st-di.st-dj.st-dk.st-dl.st-dm.st-dn>div {
+  display: none;
+}
+
+h1 {
+  color: blue;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-size: 6rem;
+  font-weight: 100;
+
+}
+
+/*
+h2 {
+  color: aliceblue;
+}
+
+span {
+  color: aliceblue
+} */
+
+/*
+.stTabs>div>div {
+  background-color: red;
+} */
