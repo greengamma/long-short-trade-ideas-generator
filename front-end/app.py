@@ -18,57 +18,61 @@ from data.performance import create_pls
 # Uses entire screen width
 st.set_page_config(layout="wide")
 
+with st.spinner('Loading Data...'):
 
-@st.cache
-def init():
-    #-------------------------------------------------------------
-    # Data Retrieval
-    #-------------------------------------------------------------
-    data_retrieval = Data()
+    @st.cache
+    def init():
+        #-------------------------------------------------------------
+        # Data Retrieval
+        #-------------------------------------------------------------
+        data_retrieval = Data()
 
-    ratios = pd.read_excel('raw_data/cleaned_data.xlsx').dropna(
-        axis=1).iloc[:, :11]
-    tickers = pd.read_excel('raw_data/ticks.xlsx')
-    prices = pd.read_excel('raw_data/weekly_prices.xlsx')
-    sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
-    sma20 = pd.read_excel('raw_data/sma_20_days.xlsx')
-    sma60 = pd.read_excel('raw_data/sma_60_days.xlsx')
-    prediction = pd.read_csv('raw_data/CNN_preds.csv')
+        ratios = pd.read_excel('raw_data/ratios.xlsx').dropna(
+            axis=1).iloc[:, :11]
+        tickers = pd.read_excel('raw_data/ticks.xlsx')
+        prices = pd.read_excel('raw_data/weekly_prices.xlsx')
+        sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
+        sma20 = pd.read_excel('raw_data/sma_20_days.xlsx')
+        sma60 = pd.read_excel('raw_data/sma_60_days.xlsx')
+        prediction_actual = pd.read_csv(
+            'raw_data/Arima_actual_predictions.csv')
+        prediction_mape = pd.read_csv('raw_data/Arima_preds_mape.csv')
 
-    #Function to merge stock data for plotting
-    def merge(prices, stockA, stockB):
-        merged_stocks = prices[['Date', stockA, stockB]]
-        return merged_stocks
+        #Function to merge stock data for plotting
+        def merge(prices, stockA, stockB):
+            merged_stocks = prices[['Date', stockA, stockB]]
+            return merged_stocks
 
-    ##Splits column names and returns list of this weeks hedge pairs
-    hedge_pairs = data_retrieval.split_hedge_names(ratios)
+        ##Splits column names and returns list of this weeks hedge pairs
+        hedge_pairs = data_retrieval.split_hedge_names(ratios)
 
-    #merges stock data for each hedge into one for plotting
-    merged = []
-    for pairs in hedge_pairs:
-        merged.append(merge(prices, pairs[0], pairs[1]))
-    merged_length = len(merged)
+        #merges stock data for each hedge into one for plotting
+        merged = []
+        for pairs in hedge_pairs:
+            merged.append(merge(prices, pairs[0], pairs[1]))
+        merged_length = len(merged)
 
-    ## Makes Dictionary of tickers(keys) to names(vals)
-    long_names, short_names = tickers_to_name(ratios)
+        ## Makes Dictionary of tickers(keys) to names(vals)
+        long_names, short_names = tickers_to_name(ratios)
 
-    # Makes a dictionary of profit and loss for current ratios for last 1 and three months
-    one_month_pl, three_month_pl = create_pls(10_000, ratios)
+        # Makes a dictionary of profit and loss for current ratios for last 1 and three months
+        one_month_pl, three_month_pl = create_pls(10_000, ratios)
 
-    return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction, long_names, short_names, one_month_pl, three_month_pl
+        return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl
 
+    data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl = init(
+    )
 
-data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions, long_names, short_names, one_month_pl, three_month_pl = init(
-)
 
 #########################################################################################
 #defines local style sheet
-# def local_css(file_name):
-#     with open(file_name) as f:
-#         st.markdown('<style>{}</style>'.format(f.read()),
-#                     unsafe_allow_html=True)
+def local_css(file_name):
+    with open(file_name) as f:
+        st.markdown('<style>{}</style>'.format(f.read()),
+                    unsafe_allow_html=True)
 
-# local_css("style.css")
+
+local_css("front-end/style.css")
 
 #--------------------------
 #Auth Requirements
@@ -187,8 +191,9 @@ if authentication_status:
                 # avg10, = ax2.plot(data['Date'], sma10[sma10.columns[i]])
                 # avg20, = ax2.plot(data['Date'], sma20[sma20.columns[i]])
                 # avg60, = ax2.plot(data['Date'], sma60[sma60.columns[i]])
-                preds, = ax2.plot(pd.to_datetime(predictions['Date']),
-                                  predictions[predictions.columns[i + 1]])
+                preds, = ax2.plot(
+                    pd.to_datetime(predictions_actual['Date']),
+                    predictions_actual[predictions_actual.columns[i + 1]])
                 ax2.legend(
                     handles=[
                         ratio,
@@ -209,7 +214,7 @@ if authentication_status:
                 ##Sets X Limit to last 60 days up to including predictions
                 ax2.set_xlim([
                     data['Date'].iat[-60],
-                    pd.to_datetime(predictions['Date'].iat[29])
+                    pd.to_datetime(predictions_actual['Date'].iat[29])
                 ])
                 ax2.set_xlabel('Date')
                 ax2.set_ylabel('Ratio')
@@ -226,34 +231,138 @@ if authentication_status:
                 fig2.savefig(buf, format="png")
                 st.image(buf)
 
-    ##########################################################################
-    #Section 2 ROI on this weeks hedge for last 6 weeks
-    ##########################################################################
+            ##########################################################################
+            # Section2 Predictions from last 30 days
+            ##########################################################################
+            st.markdown(
+                """<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """,
+                unsafe_allow_html=True)
+            st.header('Model prediction on last 30 days')
+            col_1_past, col_2_past = st.columns(2, gap="small")
+            with col_1_past:
+                st.header('Stock Prices')
+                # plot both stocks last 3 months data
+                fig1, ax1 = plt.subplots(figsize=(10, 6))
+                stocks_data = merged[i].drop('Date', axis=1)
+                stock1, = ax1.plot(merged[i]['Date'],
+                                   stocks_data[stocks_data.columns[0]],
+                                   color='green')
+
+                ##Axis info for date config
+                fig1.autofmt_xdate()
+                ax1.grid(True)
+                plt.gca().xaxis.set_major_formatter(
+                    mdates.DateFormatter('%d/%m/%Y'))
+                plt.gca().xaxis.set_major_locator(
+                    mdates.WeekdayLocator(byweekday=(FR)))
+                ax1.set_xlim([data['Date'].iat[-60], data['Date'].iat[-1]])
+                ##twin axes to plot different y axis due to large differences in stock prices
+                ax1b = ax1.twinx()
+                stock2, = ax1b.plot(merged[i]['Date'],
+                                    stocks_data[stocks_data.columns[1]],
+                                    color='red')
+
+                ##Axis info
+                ax1.set_xlabel('Date')
+                ax1.set_ylabel(f'Price for {hedge_pairs[i][0]}')
+                ax1.set_ylabel(f'Price for {hedge_pairs[i][0]}',
+                               color="black",
+                               fontsize=10)
+                ax1b.set_ylabel(f'Price for {hedge_pairs[i][1]}',
+                                color="purple",
+                                fontsize=10)
+                ##Legend Info
+
+                ax1.legend(
+                    handles=[stock1, stock2],
+                    labels=[f'{hedge_pairs[i][0]}', f'{hedge_pairs[i][1]}'],
+                    loc='upper left',
+                    fontsize=10)
+                #display as graph option to discuss
+                # st.pyplot(fig)
+
+                #Converts graph into png for display due to constraints around figsize in stramlit
+                buf = BytesIO()
+                fig1.savefig(buf, format="png")
+                st.image(buf)
+            with col_2_past:
+                st.header(
+                    'Current Ratio and model prediction for last 30 days')
+                fig2, ax2 = plt.subplots(figsize=(10, 6))
+                fig2.autofmt_xdate()
+                ratio, = ax2.plot(data['Date'], data[data.columns[i + 1]])
+                # avg10, = ax2.plot(data['Date'], sma10[sma10.columns[i]])
+                # avg20, = ax2.plot(data['Date'], sma20[sma20.columns[i]])
+                # avg60, = ax2.plot(data['Date'], sma60[sma60.columns[i]])
+                preds, = ax2.plot(
+                    pd.to_datetime(prediction_mape['Date']),
+                    prediction_mape[prediction_mape.columns[i + 1]])
+                ax2.legend(
+                    handles=[
+                        ratio,
+                        # avg10,
+                        # avg20,
+                        # avg60,
+                        preds
+                    ],
+                    labels=[
+                        'Ratio',
+                        # '10 day average',
+                        # '20 day average',
+                        # '60 day average',
+                        'Prediction'
+                    ],
+                    loc='upper left',
+                    fontsize=10)
+                ##Sets X Limit to last 60 days up to including predictions
+                ax2.set_xlim([
+                    data['Date'].iat[-60],
+                    pd.to_datetime(prediction_mape['Date'].iat[29])
+                ])
+                ax2.set_xlabel('Date')
+                ax2.set_ylabel('Ratio')
+                ax2.grid(True)
+                plt.gca().xaxis.set_major_formatter(
+                    mdates.DateFormatter('%d/%m/%Y'))
+                plt.gca().xaxis.set_major_locator(
+                    mdates.WeekdayLocator(byweekday=(FR)))
+                #display as graph option to discuss
+                # st.pyplot(fig2)
+
+                # Converts graph into png for display due to constraints around figsize in streamlit
+                buf = BytesIO()
+                fig2.savefig(buf, format="png")
+                st.image(buf)
+            ##########################################################################
+            #Section 3 ROI on this weeks hedges for last 6 weeks ($10k investment)
+            ##########################################################################
 
             st.markdown(
                 """<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """,
                 unsafe_allow_html=True)
             st.header(
-                'ROI on this weeks hedges for last month and three months')
+                'ROI on this weeks hedges for last 1-3 months ($10k investment) '
+            )
             col3, col4 = st.columns(2, gap="small")
 
             with col3:
-                st.subheader('Options')
+                ##Optional Slider element if time allows
+                # st.subheader('Options')
 
-                number = 100
-                number = st.slider(label='Pick investment level',
-                                   min_value=100,
-                                   max_value=10_000,
-                                   step=100,
-                                   on_change=create_pls,
-                                   args=(number, data),
-                                   key=f'slider{i}')
+                # number = 100
+                # number = st.slider(label='Pick investment level',
+                #                    min_value=100,
+                #                    max_value=10_000,
+                #                    step=100,
+                #                    on_change=create_pls,
+                #                    args=(number, data),
+                #                    key=f'slider{i}')
 
-            with col4:
                 st.header('One Month')
                 st.text(
                     f'{one_month_pl[f"{hedge_pairs[i][0]}_{hedge_pairs[i][1]}"]}'
                 )
+            with col4:
                 st.header('Three Months')
                 st.text(
                     f'{three_month_pl[f"{hedge_pairs[i][0]}_{hedge_pairs[i][1]}"]}'

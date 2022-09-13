@@ -125,6 +125,7 @@ class Data:
         complete_df = df_positiveRatios[increasing_trend_df.columns]
         # sample 10 ratios
         sampled_df = complete_df.sample(n=10, axis='columns')
+        sampled_df['Date'] = complete_df['Date']
         sampled_df.to_csv('cleaned_data.csv')
         # complete_df.drop('Unnamed: 0', axis=1)
         sampled_df.to_excel('../raw_data/cleaned_data.xlsx')

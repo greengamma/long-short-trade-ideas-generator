@@ -1,3 +1,4 @@
+from asyncore import compact_traceback
 import pandas as pd
 import yfinance as yf
 import numpy as np
@@ -78,13 +79,14 @@ class Data:
         friday_df.drop("day_of_week", axis=1, inplace=True)
 
         ## return only those ratios which had an increasing trend for n weeks, based on Fridays' closing prices
-
         while 1:
-            try:
-                week_count = int(eval(input('For last n weeks: ')))
-                break
-            except:
-                print('Please enter an integer')
+            #try:
+            #    week_count = int(eval(input('For last n weeks: ')))
+            #    break
+            #except:
+            #    print('Please enter an integer')
+            week_count = wk_count
+            break
 
         new_df = friday_df.iloc[-week_count:, :]
 
@@ -122,8 +124,13 @@ class Data:
         ## complete_df: contains DAILY closing prices for the last 3 months
         df_positiveRatios.reset_index(inplace=True)
         complete_df = df_positiveRatios[increasing_trend_df.columns]
-        # complete_df.drop('Unnamed: 0', axis=1)
-        complete_df.to_excel('raw_data/cleaned_data.xlsx', index=False)
+
+        ## select 6 postive ratios at random from the list of ratios
+        complete_df.dropna(axis=1, inplace=True)
+        sampled_df = complete_df.sample(n=10, axis='columns')
+        date_df = complete_df.pop('Date')
+        sampled_df.insert(0, 'Date', date_df)
+        sampled_df.to_excel('raw_data/ratios.xlsx', index=False)
         print('completed ratios')
         return complete_df
 
@@ -153,6 +160,9 @@ class Data:
             # SMA2 = SMA.iloc[days:]
             SMA.to_excel(f'raw_data/sma_{days}_days.xlsx', index=False)
             return SMA
+
+    def split_last_30(ratios):
+        ''''''
 
 
 if __name__ == '__main__':

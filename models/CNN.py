@@ -22,7 +22,7 @@ class CNN_model():
     def seperate_ratios(self, ratios_df):
         '''Seperates the ratios into lists and returns a library of the lists with column name as the key and list as value'''
         df = ratios_df.copy()
-        df.set_index('Date', inplace=True)
+        # df.set_index('Date', inplace=True)
         ratios_dict = {}
         for columns in ratios_df:
             ratios_dict[columns] = ratios_df[columns].to_list()
@@ -48,6 +48,8 @@ class CNN_model():
     def test_train_splits(self, X, y):
         X_train = X[0:X.shape[0] - 1]
         X_test = X[X.shape[0] - 1:]
+        X_train.shape
+        X_test.shape
         y_train = y[0:y.shape[0] - 1]
         y_test = y[y.shape[0] - 1:]
 
@@ -86,15 +88,26 @@ class CNN_model():
     def make_prediction(self, fitted_model, X_test):
         return fitted_model.predict(X_test, verbose=0)
 
-    # def save_predictions(self, predictions):
-    #     ratios = pd.read_excel('raw_data/cleaned_data.xlsx')
-    #     ratios['Date'] = pd.to_datetime(ratios['Date'])
-    #     start_date = (ratios['Date'].iloc[-1] +
-    #                   datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-    #     end_date = (ratios['Date'].iloc[-1] +
-    #                 datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-    #     df['Date'] = pd.date_range(start_date, end_date)
-    #     df['prediction'] = predictions
+    def make_mape(self, preds_df, ratios_df):
+        '''Calculates mape from df ratios and predictions'''
+
+        def mean_absolute_percentage_error(y_true, predictions):
+            '''Calculates MAPE for predictions'''
+            y_true, predictions = np.array(y_true), np.array(predictions)
+            return np.mean(np.abs((y_true - predictions) / y_true)) * 100
+
+        if 'Date' in preds_df.columns:
+            columns = preds_df.columns.drop('Date')
+        else:
+            columns = preds_df.columns
+        mape_dict = {}
+        for columns in columns:
+            mape = mean_absolute_percentage_error(ratios_df[columns].iloc[-30],
+                                                  preds_df[columns])
+            mape_dict[columns] = mape
+
+        mape = pd.DataFrame(mape_dict.items(), columns=['ratio', 'MAPE'])
+        return mape
 
 
 if __name__ == '__main__':
