@@ -1,3 +1,4 @@
+from ctypes import get_errno
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -98,7 +99,7 @@ class ModelXGBoost:
 
 
     # extract features with prophet
-    def prophet_features(self, df, horizon=95):
+    def prophet_features(self, df, horizon=30):
         temp_df = df.reset_index()
         ratio_name = df.columns[0]
         temp_df = temp_df[['Date', ratio_name]]
@@ -130,7 +131,7 @@ class ModelXGBoost:
 
 
     # train XGBoost model
-    def train_xgb_with_prophet_features(self, df, horizon=95, lags=[1, 2, 3, 4, 5]):
+    def train_xgb_with_prophet_features(self, df, horizon=30, lags=[1, 2, 3, 4, 5]):
         # create a dataframe with all the new features created with Prophet
         new_prophet_features = self.prophet_features(df, horizon=horizon)
         df.reset_index(inplace=True)
@@ -185,7 +186,32 @@ class ModelXGBoost:
 
         mape_dict = {}
         mape_dict[ratio_name] = mape
-        return mape_dict
+        return [mape_dict, predictions]
+
+
+    def generate_predictions(self, sorted_df, preds):
+        # select every 5th column to get the ratio name
+        preds_cols = sorted_df.columns[::5]
+
+        preds_df = pd.DataFrame()
+        i = 0
+
+        for pred in preds:
+            preds_df[preds_cols[i]] = pred
+            i += 1
+
+        check_df = sorted_df.reset_index()
+        actual_start_date = (check_df['Date'].iloc[-1] +
+                    datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        actual_end_date = (check_df['Date'].iloc[-1] +
+                   datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+
+        preds_df['Date'] = pd.date_range(actual_start_date, actual_end_date)
+        first_column = preds_df.pop('Date')
+        preds_df.insert(0, 'Date', first_column)
+
+        return preds_df
+
 
     # create model for each ratio
     # get number of ratios
@@ -197,15 +223,22 @@ class ModelXGBoost:
         col_r = 5
 
         # create dict for mape
-        mape_dict = {}
+        mape_list = []
+        preds = []
 
         for i in range(0, num_of_ratios, 1):
             ratio_df = sorted_df.iloc[:, col_l:col_r]
-            mape_dict.update(self.train_xgb_with_prophet_features(ratio_df))
+            #mape_dict.update(self.train_xgb_with_prophet_features(ratio_df))
+            returned_mape_dict, returned_preds = self.train_xgb_with_prophet_features(ratio_df)
+            mape_list.append(returned_mape_dict)
+            preds.append(returned_preds)
             col_l += 5
             col_r += 5
+            # convert list of dicts to dict
+
+        mape_dict = {k:v for element in mape_list for k,v in element.items()}
         mape_xgb_reg = pd.DataFrame(mape_dict.items(), columns=['ratio', 'MAPE'])
-        return mape_xgb_reg
+        return mape_xgb_reg, preds
 
 
 if __name__ == '__main__':
@@ -216,6 +249,8 @@ if __name__ == '__main__':
     rsi_14_df = data.create_rsi(df)
     print('rsi computed')
     sorted_df = data.concatenate_df(sma_10_df, sma_20_df, sma_60_df, rsi_14_df)
-    mape_xgb_reg = data.run_model(sorted_df)
+    mape_xgb_reg, preds = data.run_model(sorted_df)
     print('received mape_xgb_reg')
+    preds_df = data.generate_predictions(sorted_df, preds)
     print(mape_xgb_reg)
+    print(preds_df)
