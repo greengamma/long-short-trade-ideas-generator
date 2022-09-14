@@ -254,6 +254,23 @@ class FBProph:
         return forecast_df
 
 
+    def get_ratio_mapes(self, df, sorted_df):
+        df = df.set_index('Date')
+        col_names = list(df.columns)
+        mape_dict = {}
+
+        for ratio in col_names:
+            print(df)
+            print(ratio)
+            predictions_test, test_set = self.prophet_features(pd.DataFrame(sorted_df[ratio]))
+            y_true = test_set['y']
+            y_pred = predictions_test['yhat']
+            y_true, y_pred = np.array(y_true), np.array(y_pred)
+            mape_dict[ratio] = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+        return mape_dict
+
+
     def clean_df(self, sorted_df, forecast_df):
         final_forecast_df = forecast_df['yhat']
         # select every 5th column to get the ratio name
@@ -284,10 +301,11 @@ if __name__ == '__main__':
     print('rsi computed')
     sorted_df = data.concatenate_df(sma_10_df, sma_20_df, sma_60_df, rsi_14_df)
     print('sorted_df created')
-    print(sorted_df)
     test_df, preds_df = data.run_model(sorted_df)
     mape = data.fb_mape(test_df, preds_df)
     forecast_df = data.generate_forecast(sorted_df)
     final_df = data.clean_df(sorted_df, forecast_df)
     print('cleaned dataframe')
     print(final_df)
+    mape_dict = data.get_ratio_mapes(df, sorted_df)
+    print(mape_dict)
