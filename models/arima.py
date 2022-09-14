@@ -13,6 +13,7 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.graphics.tsaplots import plot_acf
 from statsmodels.graphics.tsaplots import plot_pacf
+import datetime
 
 
 class Arima_model:
@@ -31,6 +32,10 @@ class Arima_model:
         ratio_list.remove('Date')
         predictions = pd.DataFrame()
         #         predictions['Date'] = df_init['Date'].iloc[-30:]
+        actual_start_date = (df['Date'].iloc[-1] +
+                             datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        actual_end_date = (df['Date'].iloc[-1] +
+                           datetime.timedelta(days=30)).strftime("%Y-%m-%d")
 
         for i in range(len(ratio_list)):
 
@@ -72,7 +77,7 @@ class Arima_model:
 
 
 if __name__ == '__main__':
-    data = ModelArima()
+    data = Arima_model()
     df = data.get_data()
     print('received data')
     mape_arima = data.run_model(df)
