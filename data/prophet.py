@@ -268,7 +268,10 @@ class FBProph:
             y_true, y_pred = np.array(y_true), np.array(y_pred)
             mape_dict[ratio] = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
-        return mape_dict
+        # convert mape_dict to dataframe
+        mape_df = pd.DataFrame(mape_dict.items(), columns=['ratio', 'MAPE'])
+
+        return mape_df
 
 
     def clean_df(self, sorted_df, forecast_df):
@@ -307,5 +310,5 @@ if __name__ == '__main__':
     final_df = data.clean_df(sorted_df, forecast_df)
     print('cleaned dataframe')
     print(final_df)
-    mape_dict = data.get_ratio_mapes(df, sorted_df)
-    print(mape_dict)
+    mape_df = data.get_ratio_mapes(df, sorted_df)
+    print(mape_df)
