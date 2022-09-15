@@ -34,9 +34,8 @@ with st.spinner('Loading Data...'):
         sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
         sma20 = pd.read_excel('raw_data/sma_20_days.xlsx')
         sma60 = pd.read_excel('raw_data/sma_60_days.xlsx')
-        prediction_actual = pd.read_csv(
-            'raw_data/Arima_actual_predictions.csv')
-        prediction_mape = pd.read_csv('raw_data/Arima_preds_mape.csv')
+        prediction_actual = pd.read_csv('raw_data/CNN_actual_prediction.csv')
+        prediction_mape = pd.read_csv('raw_data/CNN_preds_mape.csv')
 
         #Function to merge stock data for plotting
         def merge(prices, stockA, stockB):
