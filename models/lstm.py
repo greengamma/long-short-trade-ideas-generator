@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from keras.layers import LSTM
 from keras.models import Sequential
-from tensorflow.keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping
 from keras.layers import Dense
 import yfinance as yf
 
