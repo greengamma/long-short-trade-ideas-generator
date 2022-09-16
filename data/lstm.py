@@ -6,6 +6,7 @@ from keras.models import Sequential
 from tensorflow.keras.callbacks import EarlyStopping
 from keras.layers import Dense
 import yfinance as yf
+import datetime
 
 
 class ModelLstm:
@@ -55,7 +56,7 @@ class ModelLstm:
         X_train = []
         y_train = []
 
-        time_step = 20 #change that?
+        time_step = 100
 
         for i in range(time_step, length_train):
             X_train.append(df[i-time_step:i,0:1])
@@ -112,7 +113,7 @@ class ModelLstm:
         history2 = model_lstm.fit(X_train, y_train, epochs = 400, batch_size = 64,validation_data = (X_val, y_val),callbacks=[es])
         mape = model_lstm.evaluate(X_test, y_test)
 
-        return mape[2]
+        return mape[2], model_lstm
 
 
     # implemenation refactored
@@ -134,18 +135,101 @@ class ModelLstm:
                 # create X_test, y_test
                 X_test, y_test = self.create_x_y_test(validation_data, length_validation, time_step)
                 # run LSTM model
-                mape = self.generate_model(X_train, y_train, X_val, y_val, X_test, y_test)
+                mape, model = self.generate_model(X_train, y_train, X_val, y_val, X_test, y_test)
                 mape_dict[ratio] = round(mape, 3)
 
         mape_lstm = pd.DataFrame(mape_dict.items(), columns=['ratio', 'MAPE'])
-        return mape_lstm
+
+        return mape_lstm, model
+
+
+    def prep_data(self, df):
+        df.set_index('Date', inplace=True)
+        tmp_list = []
+        fut_list = []
+
+        #Getting the last 100 days records
+        for ratio in df.columns:
+            fut_inp = df[len(df)-100:][ratio]
+            fut_inp = fut_inp.values.reshape(1,-1)
+            fut_list.append(fut_inp)
+            tmp_inp = list(fut_inp)
+            #Creating list of the last 100 data
+            tmp_inp = tmp_inp[0].tolist()
+            tmp_list.append(tmp_inp)
+
+        return tmp_list, fut_list
+
+
+    def lstm_predict(self, model, tmp_list, fut_list):
+        # predicting next 30 days price suing the current data
+        # it will predict in sliding window manner (algorithm) with stride 1
+        preds_list = []
+        for x in range(0, len(tmp_list)):
+            tmp_inp = tmp_list[x]
+            fut_inp = fut_list[x]
+            lstm_preds=[]
+            n_steps=100
+            i=0
+            while(i<30):
+
+                if(len(tmp_inp)>100):
+                    fut_inp = np.array(tmp_inp[1:])
+                    fut_inp=fut_inp.reshape(1,-1)
+                    fut_inp = fut_inp.reshape((1, n_steps, 1))
+                    yhat = model.predict(fut_inp, verbose=0)
+                    tmp_inp.extend(yhat[0].tolist())
+                    tmp_inp = tmp_inp[1:]
+                    lstm_preds.extend(yhat.tolist())
+                    i=i+1
+                else:
+                    fut_inp = fut_inp.reshape((1, n_steps,1))
+                    yhat = model.predict(fut_inp, verbose=0)
+                    tmp_inp.extend(yhat[0].tolist())
+                    lstm_preds.extend(yhat.tolist())
+                    i=i+1
+
+            preds_list.append(lstm_preds)
+
+        return preds_list
+
+
+    def clean_df(self, lstm_preds, test_df):
+        #final_forecast_df = pd.DataFrame()
+        check_df = test_df.copy()
+        df = pd.DataFrame()
+        cols = list(test_df.columns)
+        cols.pop(0)
+        preds_array = np.array(lstm_preds)
+        preds_resh = preds_array.reshape(10,30)
+        final_df = pd.DataFrame(preds_resh).T
+        final_df.columns = cols
+
+        # convert 'Date' column
+        df['Date'] = pd.to_datetime(check_df['Date'])
+        df['Date'].iloc[-1] + datetime.timedelta(days=1)
+
+        actual_start_date = (df['Date'].iloc[-1] + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        actual_end_date = (df['Date'].iloc[-1] + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        final_df['Date'] = pd.date_range(actual_start_date, actual_end_date)
+        first_column = final_df.pop('Date')
+        final_df.insert(0, 'Date', first_column)
+
+        return final_df
+
 
 
 if __name__ == '__main__':
     data = ModelLstm()
     df = data.get_data()
     print('data received')
-    mape_lstm = data.run_model(df)
+    mape_lstm, model = data.run_model(df)
     print('mape_lstm received')
     print(mape_lstm)
-    print(type(mape_lstm))
+
+    test_df = df.copy()
+    tmp_list, fut_list = data.prep_data(test_df)
+    lstm_preds = data.lstm_predict(model, tmp_list, fut_list)
+    test_df = df.copy()
+    final_forecast_df = data.clean_df(lstm_preds, test_df)
+    print(final_forecast_df)
