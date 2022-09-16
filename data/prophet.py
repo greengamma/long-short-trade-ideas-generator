@@ -13,23 +13,22 @@ import datetime
 import itertools
 from fbprophet import Prophet
 from fbprophet.diagnostics import cross_validation
-from xgboost import XGBRegressor#, plot_importance, plot_tree
+from xgboost import XGBRegressor  #, plot_importance, plot_tree
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 
 class FBProph:
+
     def __init__(self):
         pass
 
-
     # import data
     def get_data(self):
-        df = pd.read_csv('../../long_short_local/raw_data/cleaned_data_2y.csv')
+        df = pd.read_excel('raw_data/ratios.xlsx')
         # convert 'Date' column to datetime values
         df['Date'] = pd.to_datetime(df['Date'].str[:10])
 
         return df
-
 
     # create SMA (10, 20, 60 days)
     def create_sma(self, df):
@@ -42,9 +41,14 @@ class FBProph:
                 for ratio in df.columns:
                     test_df = df[['Date', ratio]]
                     sma10 = pd.DataFrame(ta.sma(test_df[ratio], length=10))
-                    loop_df = pd.concat([test_df, sma10], axis=1, ignore_index=False)
-                    loop_df.rename(columns={'SMA_10': f'{ratio}_SMA_10'}, inplace=True)
-                    sma_10_df_prep = pd.concat([sma_10_df_prep, loop_df], axis=1, ignore_index=False)
+                    loop_df = pd.concat([test_df, sma10],
+                                        axis=1,
+                                        ignore_index=False)
+                    loop_df.rename(columns={'SMA_10': f'{ratio}_SMA_10'},
+                                   inplace=True)
+                    sma_10_df_prep = pd.concat([sma_10_df_prep, loop_df],
+                                               axis=1,
+                                               ignore_index=False)
                     sma_10_df = sma_10_df_prep.iloc[:, 3:]
 
             elif sma == 20:
@@ -53,9 +57,14 @@ class FBProph:
                 for ratio in df.columns:
                     test_df = df[['Date', ratio]]
                     sma20 = pd.DataFrame(ta.sma(test_df[ratio], length=20))
-                    loop_df = pd.concat([test_df, sma20], axis=1, ignore_index=False)
-                    loop_df.rename(columns={'SMA_20': f'{ratio}_SMA_20'}, inplace=True)
-                    sma_20_df_prep = pd.concat([sma_20_df_prep, loop_df], axis=1, ignore_index=False)
+                    loop_df = pd.concat([test_df, sma20],
+                                        axis=1,
+                                        ignore_index=False)
+                    loop_df.rename(columns={'SMA_20': f'{ratio}_SMA_20'},
+                                   inplace=True)
+                    sma_20_df_prep = pd.concat([sma_20_df_prep, loop_df],
+                                               axis=1,
+                                               ignore_index=False)
                     sma_20_df = sma_20_df_prep.iloc[:, 3:]
 
             else:
@@ -64,13 +73,17 @@ class FBProph:
                 for ratio in df.columns:
                     test_df = df[['Date', ratio]]
                     sma60 = pd.DataFrame(ta.sma(test_df[ratio], length=60))
-                    loop_df = pd.concat([test_df, sma60], axis=1, ignore_index=False)
-                    loop_df.rename(columns={'SMA_60': f'{ratio}_SMA_60'}, inplace=True)
-                    sma_60_df_prep = pd.concat([sma_60_df_prep, loop_df], axis=1, ignore_index=False)
+                    loop_df = pd.concat([test_df, sma60],
+                                        axis=1,
+                                        ignore_index=False)
+                    loop_df.rename(columns={'SMA_60': f'{ratio}_SMA_60'},
+                                   inplace=True)
+                    sma_60_df_prep = pd.concat([sma_60_df_prep, loop_df],
+                                               axis=1,
+                                               ignore_index=False)
                     sma_60_df = sma_60_df_prep.iloc[:, 3:]
 
         return sma_10_df, sma_20_df, sma_60_df
-
 
     # create RSI 14
     def create_rsi(self, df):
@@ -81,10 +94,11 @@ class FBProph:
             rsi14 = pd.DataFrame(ta.rsi(test_df[ratio], length=14))
             loop_df = pd.concat([test_df, rsi14], axis=1, ignore_index=False)
             loop_df.rename(columns={'RSI_14': f'{ratio}_RSI_14'}, inplace=True)
-            rsi_14_df_prep = pd.concat([rsi_14_df_prep, loop_df], axis=1, ignore_index=False)
+            rsi_14_df_prep = pd.concat([rsi_14_df_prep, loop_df],
+                                       axis=1,
+                                       ignore_index=False)
             rsi_14_df = rsi_14_df_prep.iloc[:, 3:]
         return rsi_14_df
-
 
     def concatenate_df(self, sma_10_df, sma_20_df, sma_60_df, rsi_14_df):
         # concatenate all 4 dataframse
@@ -92,16 +106,17 @@ class FBProph:
         concat_10_20_60_df = pd.concat([concat_10_20_df, sma_60_df], axis=1)
         combined_df = pd.concat([concat_10_20_60_df, rsi_14_df], axis=1)
         # remove duplicates of 'Date' column
-        dropped_date_df = combined_df.loc[:,~combined_df.columns.duplicated()]
+        dropped_date_df = combined_df.loc[:, ~combined_df.columns.duplicated()]
         dropped_date_df.set_index('Date', inplace=True)
         # sort the ratios by column name
-        sorted_df = dropped_date_df.reindex(sorted(dropped_date_df.columns, reverse=False), axis=1)
+        sorted_df = dropped_date_df.reindex(sorted(dropped_date_df.columns,
+                                                   reverse=False),
+                                            axis=1)
         # clean dataframe
         sorted_df = sorted_df.fillna(sorted_df.median())
         #sorted_df.reset_index(inplace=True)
 
         return sorted_df
-
 
     # extract features with prophet
     def prophet_features(self, df, horizon=30):
@@ -111,17 +126,16 @@ class FBProph:
         temp_df.rename(columns={'Date': 'ds', ratio_name: 'y'}, inplace=True)
 
         # take last week of the dataset for validation
-        train_set, test_set = temp_df.iloc[:-horizon,:], temp_df.iloc[-horizon:,:]
+        train_set, test_set = temp_df.iloc[:-horizon, :], temp_df.iloc[
+            -horizon:, :]
 
         # define prophet model
-        m = Prophet(
-                    growth='linear',
+        m = Prophet(growth='linear',
                     seasonality_mode='additive',
                     interval_width=0.95,
                     daily_seasonality=True,
                     weekly_seasonality=True,
-                    yearly_seasonality=False
-                )
+                    yearly_seasonality=False)
         # train prophet model
         m.fit(train_set)
 
@@ -134,8 +148,7 @@ class FBProph:
 
         return predictions_test, test_set
 
-
-    def fb_mape(self, df, preds_df):
+    def fb_mape(self, df, preds_df, sorted_df):
         # extract 'date' columns
         date_col = preds_df['ds'].iloc[:, 0]
         # select every 5th column to get the ratio name
@@ -157,7 +170,6 @@ class FBProph:
 
         return mape
 
-
     def generate_predictions(self, sorted_df, preds):
         # select every 5th column to get the ratio name
         preds_cols = sorted_df.columns[::5]
@@ -171,16 +183,15 @@ class FBProph:
 
         check_df = sorted_df.reset_index()
         actual_start_date = (check_df['Date'].iloc[-1] +
-                    datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+                             datetime.timedelta(days=1)).strftime("%Y-%m-%d")
         actual_end_date = (check_df['Date'].iloc[-1] +
-                   datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+                           datetime.timedelta(days=30)).strftime("%Y-%m-%d")
 
         preds_df['Date'] = pd.date_range(actual_start_date, actual_end_date)
         first_column = preds_df.pop('Date')
         preds_df.insert(0, 'Date', first_column)
 
         return preds_df
-
 
     # create model for each ratio
     # get number of ratios
@@ -205,7 +216,6 @@ class FBProph:
 
         return test_df, preds_df
 
-
     def fb_forecast(self, df, horizon=30):
         temp_df = df.reset_index()
         ratio_name = df.columns[0]
@@ -213,14 +223,12 @@ class FBProph:
         temp_df.rename(columns={'Date': 'ds', ratio_name: 'y'}, inplace=True)
 
         # define prophet model
-        m = Prophet(
-                    growth='linear',
+        m = Prophet(growth='linear',
                     seasonality_mode='additive',
                     interval_width=0.95,
                     daily_seasonality=True,
                     weekly_seasonality=True,
-                    yearly_seasonality=False
-                )
+                    yearly_seasonality=False)
         # train prophet model
         m.fit(temp_df)
 
@@ -230,7 +238,6 @@ class FBProph:
         forecast = forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
 
         return forecast
-
 
     def generate_forecast(self, sorted_df):
         # call forecast function
@@ -253,7 +260,6 @@ class FBProph:
 
         return forecast_df
 
-
     def get_ratio_mapes(self, df, sorted_df):
         df = df.set_index('Date')
         col_names = list(df.columns)
@@ -262,17 +268,18 @@ class FBProph:
         for ratio in col_names:
             print(df)
             print(ratio)
-            predictions_test, test_set = self.prophet_features(pd.DataFrame(sorted_df[ratio]))
+            predictions_test, test_set = self.prophet_features(
+                pd.DataFrame(sorted_df[ratio]))
             y_true = test_set['y']
             y_pred = predictions_test['yhat']
             y_true, y_pred = np.array(y_true), np.array(y_pred)
-            mape_dict[ratio] = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+            mape_dict[ratio] = np.mean(np.abs(
+                (y_true - y_pred) / y_true)) * 100
 
         # convert mape_dict to dataframe
         mape_df = pd.DataFrame(mape_dict.items(), columns=['ratio', 'MAPE'])
 
         return mape_df
-
 
     def clean_df(self, sorted_df, forecast_df):
         final_forecast_df = forecast_df['yhat']
@@ -284,15 +291,17 @@ class FBProph:
         final_forecast_df = pd.concat([final_forecast_df, all_dates], axis=1)
         final_forecast_df.rename(columns={'ds': 'Date'}, inplace=True)
         check_df = sorted_df.reset_index()
-        actual_start_date = (check_df['Date'].iloc[-1] + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-        actual_end_date = (check_df['Date'].iloc[-1] + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-        really_final_df = final_forecast_df[final_forecast_df.Date.between(actual_start_date, actual_end_date)]
+        actual_start_date = (check_df['Date'].iloc[-1] +
+                             datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        actual_end_date = (check_df['Date'].iloc[-1] +
+                           datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        really_final_df = final_forecast_df[final_forecast_df.Date.between(
+            actual_start_date, actual_end_date)]
         #final_forecast_df['Date'] = pd.date_range(actual_start_date, actual_end_date)
         first_column = really_final_df.pop('Date')
         really_final_df.insert(0, 'Date', first_column)
 
         return really_final_df
-
 
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ This function receives as input the MAPE of the four models (order is important!
 It returns the name of the model with the lowest
 '''
     # list of model names to print
-    model_names = ['LSTM', 'ARIMA', 'CNN', 'Prophet/XGBoost']
+    model_names = ['LSTM', 'ARIMA', 'CNN', 'XGB']
     mape_list = [lstm_mape, arima_mape, cnn_mape, xgb_reg_mape]
     model_dict = {}
 
