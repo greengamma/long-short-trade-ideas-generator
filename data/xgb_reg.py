@@ -2,8 +2,6 @@ from ctypes import get_errno
 import pandas as pd
 import numpy as np
 import yfinance as yf
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.model_selection import cross_val_score, ParameterGrid
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import statsmodels.api as sm

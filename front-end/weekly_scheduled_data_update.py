@@ -13,21 +13,25 @@ data = Data()
 
 # Update Data
 # tickers = data.get_tickers()
-# prices = data.get_prices(tickers)
+# print('tickers')
+# prices = data.get_prices(tickers, '2y')
+# print('prices')
 # ratios = data.get_ratios(6)
+# print('ratios')
 # sma10 = data.create_SMA(10)
 # sma20 = data.create_SMA(20)
 # sma60 = data.create_SMA(60)
+# print('moving averages')
 
-# update CNN model
-# CNN = CNN_model()
-##Get Data
-# df = CNN.get_data('raw_data/ratios.xlsx')
+# # update CNN model
+CNN = CNN_model()
+# ##Get Data
+df = CNN.get_data('raw_data/ratios.xlsx')
 
-# actual_start_date = (df['Date'].iloc[-1] +
-#  datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-# actual_end_date = (df['Date'].iloc[-1] +
-#    datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+actual_start_date = (df['Date'].iloc[-1] +
+                     datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+actual_end_date = (df['Date'].iloc[-1] +
+                   datetime.timedelta(days=30)).strftime("%Y-%m-%d")
 
 # mape_predictions_cnn = pd.DataFrame()
 # actual_predictions_cnn = pd.DataFrame()
@@ -53,12 +57,12 @@ data = Data()
 #     actual_predictions = CNN.make_prediction(model, X_actual)
 #     actual_predictions_cnn[columns] = actual_predictions[0]
 
-# mape_predictions_cnn.to_csv('raw_data/CNN_preds_mape.csv', index=False)
-# actual_predictions_cnn.to_csv('raw_data/CNN_actual_prediction.csv',
-#                           index=False)
+# mape_predictions_cnn.to_csv('raw_data/CNN_mape_predictions.csv', index=False)
+# actual_predictions_cnn.to_csv('raw_data/CNN_actual_predictions.csv',
+#                               index=False)
 
-# CNN_df = pd.read_csv('raw_data/CNN_preds_mape.csv')
-# ratios_df = pd.read_excel('raw_data/ratios.xlsx')
+# CNN_df = pd.read_csv('raw_data/CNN_mape_predictions.csv')
+ratios_df = pd.read_excel('raw_data/ratios.xlsx')
 
 # CNN_mapes = CNN.make_mape(CNN_df, ratios_df)
 # CNN_mapes.to_csv('raw_data/CNN_mapes.csv', index=False)
@@ -77,9 +81,9 @@ data = Data()
 # first_column = actual.pop('Date')
 # actual.insert(0, 'Date', first_column)
 
-# mape.to_csv('raw_data/Arima_preds_mape.csv', index=False)
+# mape.to_csv('raw_data/Arima_mape_predictions.csv', index=False)
 # actual.to_csv('raw_data/Arima_actual_predictions.csv', index=False)
-# Arima_df = pd.read_csv('raw_data/Arima_preds_mape.csv')
+# Arima_df = pd.read_csv('raw_data/Arima_mape_predictions.csv')
 # Arima_mapes = CNN.make_mape(Arima_df, ratios_df)
 # Arima_mapes.to_csv('raw_data/Arima_mapes.csv', index=False)
 
@@ -104,13 +108,6 @@ final_df = data.clean_df(sorted_df, forecast_df)
 # mape_preds_df = data.clean_df(sorted_df, test_df)
 print('cleaned dataframe')
 
-#get Mape forecast from forecast
-# forecast_df = forecast_df[['ds', 'yhat']]
-# forecast_df = forecast_df.iloc[:, 9]
-# names = final_df.columns
-# forecast_df.columns = names
-# forecast_df = forecast_df.loc[474:503]
-
 forecast_df = forecast_df[[
     'ds',
     'yhat',
@@ -130,7 +127,3 @@ print(test_df)
 final_df.to_csv('raw_data/prophet_actual_predictions.csv', index=False)
 mape_df.to_csv('raw_data/prophet_mapes.csv', index=False)
 forecast_df.to_csv('raw_data/prophet_mape_predictions.csv', index=False)
-#make 30 day predictions on df
-# save predictions to {model_name}.csv
-
-##MAPE Calculations

@@ -44,6 +44,15 @@ h1 {
 
 }
 
+.css-183lzff.eyqtai90 {
+  font-size: 2rem;
+  /* padding-top: 10rem; */
+}
+
+#tabs-1-tabpanel-1>div:nth-child(1)>div>div:nth-child(8)>div {
+  padding-top: 5rem;
+}
+
 /*
 h2 {
   color: aliceblue;

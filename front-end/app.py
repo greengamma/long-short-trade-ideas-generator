@@ -26,7 +26,7 @@ with st.spinner('Loading Data...'):
         # Data Retrieval
         #-------------------------------------------------------------
         data_retrieval = Data()
-
+        model_name = 'prophet'
         ratios = pd.read_excel('raw_data/ratios.xlsx').dropna(
             axis=1).iloc[:, :11]
         tickers = pd.read_excel('raw_data/ticks.xlsx')
@@ -34,9 +34,14 @@ with st.spinner('Loading Data...'):
         sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
         sma20 = pd.read_excel('raw_data/sma_20_days.xlsx')
         sma60 = pd.read_excel('raw_data/sma_60_days.xlsx')
+
+        #mapes
+        mapes = pd.read_csv(f'raw_data/{model_name}_mapes.csv')
+
         prediction_actual = pd.read_csv(
-            'raw_data/prophet_actual_predictions.csv')
-        prediction_mape = pd.read_csv('raw_data/prophet_mape_predictions.csv')
+            f'raw_data/{model_name}_actual_predictions.csv')
+        prediction_mape = pd.read_csv(
+            f'raw_data/{model_name}_mape_predictions.csv')
         prediction_actual['Date'] = pd.to_datetime(prediction_actual['Date'])
         prediction_mape['Date'] = pd.to_datetime(prediction_mape['Date'])
         ratios['Date'] = pd.to_datetime(ratios['Date'])
@@ -65,9 +70,9 @@ with st.spinner('Loading Data...'):
         # Makes a dictionary of profit and loss for current ratios for last 1 and three months
         one_month_pl, three_month_pl = create_pls(10_000, ratios)
 
-        return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl
+        return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl, mapes
 
-    data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl = init(
+    data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl, mapes = init(
     )
 
 
@@ -195,29 +200,20 @@ if authentication_status:
                 fig2, ax2 = plt.subplots(figsize=(10, 6))
                 fig2.autofmt_xdate()
                 ratio, = ax2.plot(data['Date'], data[data.columns[i + 1]])
-                # avg10, = ax2.plot(data['Date'], sma10[sma10.columns[i]])
-                # avg20, = ax2.plot(data['Date'], sma20[sma20.columns[i]])
-                # avg60, = ax2.plot(data['Date'], sma60[sma60.columns[i]])
+                avg10, = ax2.plot(data['Date'], sma10[sma10.columns[i]])
+                avg20, = ax2.plot(data['Date'], sma20[sma20.columns[i]])
+                avg60, = ax2.plot(data['Date'], sma60[sma60.columns[i]])
                 preds, = ax2.plot(
                     pd.to_datetime(predictions_actual['Date']),
                     predictions_actual[predictions_actual.columns[i + 1]])
-                ax2.legend(
-                    handles=[
-                        ratio,
-                        # avg10,
-                        # avg20,
-                        # avg60,
-                        preds
-                    ],
-                    labels=[
-                        'Ratio',
-                        # '10 day average',
-                        # '20 day average',
-                        # '60 day average',
-                        'Prediction'
-                    ],
-                    loc='upper left',
-                    fontsize=10)
+                ax2.legend(handles=[ratio, avg10, avg20, avg60, preds],
+                           labels=[
+                               'Ratio', '10 day rolling average',
+                               '20 day rolling average',
+                               '60 day rolling average', 'Prediction'
+                           ],
+                           loc='upper left',
+                           fontsize=10)
                 ##Sets X Limit to last 60 days up to including predictions
                 ax2.set_xlim([
                     data['Date'].iat[-60],
@@ -246,53 +242,12 @@ if authentication_status:
                 unsafe_allow_html=True)
             st.header('Model prediction on last 30 days')
             col_1_past, col_2_past = st.columns(2, gap="small")
-            with col_1_past:
-                st.header('Stock Prices')
-                # plot both stocks last 3 months data
-                fig1, ax1 = plt.subplots(figsize=(10, 6))
-                stocks_data = merged[i].drop('Date', axis=1)
-                stock1, = ax1.plot(merged[i]['Date'],
-                                   stocks_data[stocks_data.columns[0]],
-                                   color='green')
-
-                ##Axis info for date config
-                fig1.autofmt_xdate()
-                ax1.grid(True)
-                plt.gca().xaxis.set_major_formatter(
-                    mdates.DateFormatter('%d/%m/%Y'))
-                plt.gca().xaxis.set_major_locator(
-                    mdates.WeekdayLocator(byweekday=(FR)))
-                ax1.set_xlim([data['Date'].iat[-60], data['Date'].iat[-1]])
-                ##twin axes to plot different y axis due to large differences in stock prices
-                ax1b = ax1.twinx()
-                stock2, = ax1b.plot(merged[i]['Date'],
-                                    stocks_data[stocks_data.columns[1]],
-                                    color='red')
-
-                ##Axis info
-                ax1.set_xlabel('Date')
-                ax1.set_ylabel(f'Price for {hedge_pairs[i][0]}')
-                ax1.set_ylabel(f'Price for {hedge_pairs[i][0]}',
-                               color="black",
-                               fontsize=10)
-                ax1b.set_ylabel(f'Price for {hedge_pairs[i][1]}',
-                                color="purple",
-                                fontsize=10)
-                ##Legend Info
-
-                ax1.legend(
-                    handles=[stock1, stock2],
-                    labels=[f'{hedge_pairs[i][0]}', f'{hedge_pairs[i][1]}'],
-                    loc='upper left',
-                    fontsize=10)
-                #display as graph option to discuss
-                # st.pyplot(fig)
-
-                #Converts graph into png for display due to constraints around figsize in stramlit
-                buf = BytesIO()
-                fig1.savefig(buf, format="png")
-                st.image(buf)
             with col_2_past:
+
+                st.text(
+                    f'Model Accuracy for last 30 days: ={round(mapes["MAPE"][i],2)}'
+                )
+            with col_1_past:
                 st.header(
                     'Current Ratio and model prediction for last 30 days')
                 fig2, ax2 = plt.subplots(figsize=(10, 6))
@@ -347,33 +302,32 @@ if authentication_status:
             st.markdown(
                 """<hr style="height:10px;border:none;color:#333;background-color:#333;" /> """,
                 unsafe_allow_html=True)
-            st.header(
-                'ROI on this weeks hedges for last 1-3 months ($10k investment) '
-            )
+            st.header('Expected ROI in next 30 days ($10k investment) ')
+            total = round(
+                10000 *
+                (predictions_actual[predictions_actual.columns[i + 1]].loc[29]
+                 /
+                 predictions_actual[predictions_actual.columns[i + 1]].loc[0]),
+                2)
+            st.text(
+                f'Model predicts a $10,000 investment wil be worth ${total} ')
+
+            if total > 10_000:
+                reccomendation = f'Short :{hedge_pairs[i][1]} and Long {hedge_pairs[i][0]}'
+                explanation = f'The model predicts a continuation of the current trend '
+            else:
+                reccomendation = f'Short:{hedge_pairs[i][0]} and Long {hedge_pairs[i][1]}'
+                explanation = 'The model predicts this ratio will start to fall but profit \ncan still be achieved by reversing the hedge'
+            st.text('Reccomendation:')
+            st.text(reccomendation)
+            st.text(explanation)
             col3, col4 = st.columns(2, gap="small")
 
             with col3:
-                ##Optional Slider element if time allows
-                # st.subheader('Options')
+                pass
 
-                # number = 100
-                # number = st.slider(label='Pick investment level',
-                #                    min_value=100,
-                #                    max_value=10_000,
-                #                    step=100,
-                #                    on_change=create_pls,
-                #                    args=(number, data),
-                #                    key=f'slider{i}')
-
-                st.header('One Month')
-                st.text(
-                    f'{one_month_pl[f"{hedge_pairs[i][0]}_{hedge_pairs[i][1]}"]}'
-                )
             with col4:
-                st.header('Three Months')
-                st.text(
-                    f'{three_month_pl[f"{hedge_pairs[i][0]}_{hedge_pairs[i][1]}"]}'
-                )
+                pass
 ##########################################################################
 #Section 3 previous weeks suggestions current ROI
 ##########################################################################
