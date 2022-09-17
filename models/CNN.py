@@ -102,8 +102,8 @@ class CNN_model():
             columns = preds_df.columns
         mape_dict = {}
         for columns in columns:
-            mape = mean_absolute_percentage_error(ratios_df[columns].iloc[-30],
-                                                  preds_df[columns])
+            mape = mean_absolute_percentage_error(
+                ratios_df[columns].iloc[-31:-1], preds_df[columns])
             mape_dict[columns] = mape
 
         mape = pd.DataFrame(mape_dict.items(), columns=['ratio', 'MAPE'])

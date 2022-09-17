@@ -55,9 +55,7 @@ class ModelLstm:
         X_train = []
         y_train = []
 
-
         time_step = 100
-
 
         for i in range(time_step, length_train):
             X_train.append(df[i - time_step:i, 0:1])
@@ -151,14 +149,14 @@ class ModelLstm:
                                                       time_step)
                 # run LSTM model
 
-                mape, model = self.generate_model(X_train, y_train, X_val, y_val, X_test, y_test)
+                mape, model = self.generate_model(X_train, y_train, X_val,
+                                                  y_val, X_test, y_test)
 
                 mape_dict[ratio] = round(mape, 3)
 
         mape_lstm = pd.DataFrame(mape_dict.items(), columns=['ratio', 'MAPE'])
 
         return mape_lstm, model
-
 
     def prep_data(self, df):
         df.set_index('Date', inplace=True)
@@ -167,8 +165,8 @@ class ModelLstm:
 
         #Getting the last 100 days records
         for ratio in df.columns:
-            fut_inp = df[len(df)-100:][ratio]
-            fut_inp = fut_inp.values.reshape(1,-1)
+            fut_inp = df[len(df) - 100:][ratio]
+            fut_inp = fut_inp.values.reshape(1, -1)
             fut_list.append(fut_inp)
             tmp_inp = list(fut_inp)
             #Creating list of the last 100 data
@@ -177,7 +175,6 @@ class ModelLstm:
 
         return tmp_list, fut_list
 
-
     def lstm_predict(self, model, tmp_list, fut_list):
         # predicting next 30 days price suing the current data
         # it will predict in sliding window manner (algorithm) with stride 1
@@ -185,31 +182,30 @@ class ModelLstm:
         for x in range(0, len(tmp_list)):
             tmp_inp = tmp_list[x]
             fut_inp = fut_list[x]
-            lstm_preds=[]
-            n_steps=100
-            i=0
-            while(i<30):
+            lstm_preds = []
+            n_steps = 100
+            i = 0
+            while (i < 30):
 
-                if(len(tmp_inp)>100):
+                if (len(tmp_inp) > 100):
                     fut_inp = np.array(tmp_inp[1:])
-                    fut_inp=fut_inp.reshape(1,-1)
+                    fut_inp = fut_inp.reshape(1, -1)
                     fut_inp = fut_inp.reshape((1, n_steps, 1))
                     yhat = model.predict(fut_inp, verbose=0)
                     tmp_inp.extend(yhat[0].tolist())
                     tmp_inp = tmp_inp[1:]
                     lstm_preds.extend(yhat.tolist())
-                    i=i+1
+                    i = i + 1
                 else:
-                    fut_inp = fut_inp.reshape((1, n_steps,1))
+                    fut_inp = fut_inp.reshape((1, n_steps, 1))
                     yhat = model.predict(fut_inp, verbose=0)
                     tmp_inp.extend(yhat[0].tolist())
                     lstm_preds.extend(yhat.tolist())
-                    i=i+1
+                    i = i + 1
 
             preds_list.append(lstm_preds)
 
         return preds_list
-
 
     def clean_df(self, lstm_preds, test_df):
         #final_forecast_df = pd.DataFrame()
@@ -218,7 +214,7 @@ class ModelLstm:
         cols = list(test_df.columns)
         cols.pop(0)
         preds_array = np.array(lstm_preds)
-        preds_resh = preds_array.reshape(10,30)
+        preds_resh = preds_array.reshape(10, 30)
         final_df = pd.DataFrame(preds_resh).T
         final_df.columns = cols
 
@@ -226,14 +222,15 @@ class ModelLstm:
         df['Date'] = pd.to_datetime(check_df['Date'])
         df['Date'].iloc[-1] + datetime.timedelta(days=1)
 
-        actual_start_date = (df['Date'].iloc[-1] + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-        actual_end_date = (df['Date'].iloc[-1] + datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+        actual_start_date = (df['Date'].iloc[-1] +
+                             datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+        actual_end_date = (df['Date'].iloc[-1] +
+                           datetime.timedelta(days=30)).strftime("%Y-%m-%d")
         final_df['Date'] = pd.date_range(actual_start_date, actual_end_date)
         first_column = final_df.pop('Date')
         final_df.insert(0, 'Date', first_column)
 
         return final_df
-
 
 
 if __name__ == '__main__':
@@ -250,3 +247,6 @@ if __name__ == '__main__':
     test_df = df.copy()
     final_forecast_df = data.clean_df(lstm_preds, test_df)
     print(final_forecast_df)
+    final_forecast_df.to_csv('raw_data/lstm_actual_predictions.csv',
+                             index=False)
+    mape_lstm.to_csv('raw_data/lstm_mapes.csv', index=False)
