@@ -14,6 +14,7 @@ from matplotlib.dates import MO, TU, WE, TH, FR, SA, SU
 from data.ticker_name_industry import tickers_to_name
 from data.refactored_data import Data
 from data.performance import create_pls
+from data.best_mape_model import determine_best_model
 # from data.ticker_name_industry import ticker_names
 # Uses entire screen width
 st.set_page_config(layout="wide")
@@ -26,7 +27,7 @@ with st.spinner('Loading Data...'):
         # Data Retrieval
         #-------------------------------------------------------------
         data_retrieval = Data()
-        model_name = 'prophet'
+
         ratios = pd.read_excel('raw_data/ratios.xlsx').dropna(
             axis=1).iloc[:, :11]
         tickers = pd.read_excel('raw_data/ticks.xlsx')
@@ -34,7 +35,11 @@ with st.spinner('Loading Data...'):
         sma10 = pd.read_excel('raw_data/sma_10_days.xlsx')
         sma20 = pd.read_excel('raw_data/sma_20_days.xlsx')
         sma60 = pd.read_excel('raw_data/sma_60_days.xlsx')
-
+        lstm = pd.read_csv('raw_data/lstm_mapes.csv')
+        CNN = pd.read_csv('raw_data/CNN_mapes.csv')
+        Arima = pd.read_csv('raw_data/Arima_mapes.csv')
+        prophet = pd.read_csv('raw_data/prophet_mapes.csv')
+        model_name = determine_best_model(lstm, Arima, CNN, prophet)[0]
         #mapes
         mapes = pd.read_csv(f'raw_data/{model_name}_mapes.csv')
 
@@ -70,9 +75,9 @@ with st.spinner('Loading Data...'):
         # Makes a dictionary of profit and loss for current ratios for last 1 and three months
         one_month_pl, three_month_pl = create_pls(10_000, ratios)
 
-        return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl, mapes
+        return ratios, tickers, prices, merged, merged_length, hedge_pairs, sma10, sma20, sma60, prediction_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl, mapes, model_name
 
-    data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl, mapes = init(
+    data, symbols, stock_dict, merged, merged_length, hedge_pairs, sma10, sma20, sma60, predictions_actual, prediction_mape, long_names, short_names, one_month_pl, three_month_pl, mapes, model_name = init(
     )
 
 
@@ -243,13 +248,13 @@ if authentication_status:
             st.header('Model prediction on last 30 days')
             col_1_past, col_2_past = st.columns(2, gap="small")
             with col_2_past:
-
+                st.text(f'This weeks most accurate model is: {model_name}')
                 st.text(
                     f'Model Accuracy for last 30 days: ={round(mapes["MAPE"][i],2)}'
                 )
             with col_1_past:
-                st.header(
-                    'Current Ratio and model prediction for last 30 days')
+                # st.header(
+                #     'Current Ratio and model prediction for last 30 days')
                 fig2, ax2 = plt.subplots(figsize=(10, 6))
                 fig2.autofmt_xdate()
                 ratio, = ax2.plot(data['Date'], data[data.columns[i + 1]])
@@ -313,12 +318,12 @@ if authentication_status:
                 f'Model predicts a $10,000 investment wil be worth ${total} ')
 
             if total > 10_000:
-                reccomendation = f'Short :{hedge_pairs[i][1]} and Long {hedge_pairs[i][0]}'
+                reccomendation = f'Short: {hedge_pairs[i][1]} and Long: {hedge_pairs[i][0]}'
                 explanation = f'The model predicts a continuation of the current trend '
             else:
                 reccomendation = f'Short:{hedge_pairs[i][0]} and Long {hedge_pairs[i][1]}'
                 explanation = 'The model predicts this ratio will start to fall but profit \ncan still be achieved by reversing the hedge'
-            st.text('Reccomendation:')
+            st.text('Recommendation:')
             st.text(reccomendation)
             st.text(explanation)
             col3, col4 = st.columns(2, gap="small")

@@ -53,6 +53,10 @@ h1 {
   padding-top: 5rem;
 }
 
+#tabs-1-tabpanel-0>div:nth-child(1)>div>div:nth-child(5)>div:nth-child(2)>div:nth-child(1)>div>div>div {
+  padding-top: 15rem
+}
+
 /*
 h2 {
   color: aliceblue;
