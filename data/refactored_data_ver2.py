@@ -118,17 +118,19 @@ class Data:
 
         increasing_trend_df = new_df.iloc[:, increasing_trend_list]
 
-        ## filters the dataframe accoring to last n weeks with a positive trend:
+        ## filters the dataframe according to last n weeks with a positive trend:
         ## increasing_trend_df: contains WEEKLY closing prices for 'n' Fridays
         ## complete_df: contains DAILY closing prices for the last 3 months
         df_positiveRatios.reset_index(inplace=True)
         complete_df = df_positiveRatios[increasing_trend_df.columns]
         # sample 10 ratios
-        sampled_df = complete_df.sample(n=10, axis='columns')
+        sampled_df = complete_df.sample(n=30, axis='columns')
         sampled_df['Date'] = complete_df['Date']
         sampled_df.to_csv('cleaned_data.csv')
         # complete_df.drop('Unnamed: 0', axis=1)
-        sampled_df.to_excel('../raw_data/cleaned_data.xlsx')
+        sampled_df['Date'] = pd.to_datetime(sampled_df['Date'])
+        sampled_df.set_index('Date', inplace=True)
+        sampled_df.to_excel('../raw_data/cleaned_data.xlsx', index=True)
         print('completed ratios')
         return sampled_df
 

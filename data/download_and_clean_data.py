@@ -11,7 +11,7 @@ import os
 
 # 1. Data download
 ## read ticker data as Series and convert to list
-tickers = pd.read_csv('raw_data/tickers.csv', squeeze=True)
+tickers = pd.read_csv('../tickers/tickers.csv', squeeze=True)
 tickers = tickers.tolist()
 
 price_list = []
@@ -109,6 +109,6 @@ increasing_trend_df = new_df.iloc[:, increasing_trend_list]
 df_positiveRatios.reset_index(inplace=True)
 complete_df = df_positiveRatios[increasing_trend_df.columns]
 
-complete_df.to_csv('raw_data/cleaned_data.csv', index=False)
+complete_df.to_csv('cleaned_data.csv', index=False)
 
 len(complete_df.columns)
