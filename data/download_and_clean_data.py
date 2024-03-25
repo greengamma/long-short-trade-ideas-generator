@@ -103,7 +103,7 @@ while 1:
 
 increasing_trend_df = new_df.iloc[:, increasing_trend_list]
 
-## filters the dataframe accoring to last n weeks with a positive trend:
+## filters the dataframe according to last n weeks with a positive trend:
 ## increasing_trend_df: contains WEEKLY closing prices for 'n' Fridays
 ## complete_df: contains DAILY closing prices for the last 3 months
 df_positiveRatios.reset_index(inplace=True)
