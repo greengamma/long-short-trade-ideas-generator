@@ -35,7 +35,7 @@ ratio_df = pd.concat([
 ],
                      axis=1)
 
-# 3. Compute daily price change in %
+# 3. Compute daily price change in percent (%)
 ## compute the % change of the ratio between today and yesterday for the last X days
 df_delta = ratio_df.pct_change(periods=1)
 df_delta = df_delta.iloc[-4:]
