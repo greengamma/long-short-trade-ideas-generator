@@ -94,7 +94,6 @@ while column_index < num_columns:
         temp_series_list_sorted = sorted(temp_series_list,
                                          key=float,
                                          reverse=False)
-# new
         if temp_series_list == temp_series_list_sorted:
             increasing_trend_list.append(True)
         else:
