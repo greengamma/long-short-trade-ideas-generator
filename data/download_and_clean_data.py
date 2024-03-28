@@ -9,9 +9,12 @@ import numpy as np
 import sys
 import os
 
+
+print("Current Working Directory:", os.getcwd())
+
 # 1. Data download
 ## read ticker data as Series and convert to list
-tickers = pd.read_csv('../tickers/tickers.csv', squeeze=True)
+tickers = pd.read_csv('tickers.csv', squeeze=True)
 tickers = tickers.tolist()
 
 price_list = []
@@ -67,7 +70,7 @@ friday_df.drop("day_of_week", axis=1, inplace=True)
 
 while 1:
     try:
-        week_count = int(eval(input('For last n weeks: ')))
+        week_count = 4 #int(eval(input('For last n weeks: ')))
         break
     except:
         print('Please enter an integer')
@@ -79,7 +82,10 @@ increasing_trend_df = []
 
 increasing_trend_list = []
 
-while 1:
+# new
+num_columns = new_df.shape[1]
+
+while column_index < num_columns:
     try:
 
         ## parsing by column
@@ -88,7 +94,7 @@ while 1:
         temp_series_list_sorted = sorted(temp_series_list,
                                          key=float,
                                          reverse=False)
-
+# new
         if temp_series_list == temp_series_list_sorted:
             increasing_trend_list.append(True)
         else:
