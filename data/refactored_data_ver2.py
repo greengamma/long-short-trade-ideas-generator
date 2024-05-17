@@ -169,10 +169,6 @@ class Data:
         return SMA
 
 
-    # def save_file(self, ratios):
-    #     ratios.to_csv('FINAL.csv', index=False)
-
-
 if __name__ == '__main__':
     data = Data()
     tickers = data.get_tickers()
