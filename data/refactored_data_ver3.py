@@ -25,16 +25,6 @@ class Data:
         return tickers
 
 
-    #creates list of sp500 ticker names from csv file
-    # def get_tickers(self):
-    #     '''creates list of sp500 ticker names from csv file'''
-
-    #     tickers = pd.read_csv('../raw_data/tickers.csv').squeeze('columns')
-    #     tickers = tickers.tolist()
-
-    #     return tickers
-
-
     def get_prices(self, tickers, time_period="6mo"):
         '''gets prices from yfinance for time_period for each ticker in arg list'''
         price_list = []
@@ -100,8 +90,9 @@ class Data:
             #    break
             #except:
             #    print('Please enter an integer')
-            week_count = 6
+            #week_count = 6
             break
+        week_count = 6
         new_df = friday_df.iloc[-week_count:, :]
 
         column_index = 0
@@ -195,8 +186,3 @@ if __name__ == '__main__':
     print('prices calculated')
     ratios = data.get_ratios(10)
     print('ratios calculated')
-    print(ratios)
-    print()
-    #data.save_file(ratios)
-    print('File saved...')
-    print('Done!')
