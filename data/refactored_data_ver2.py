@@ -141,7 +141,7 @@ class Data:
         # sample 10 ratios
         sampled_df = complete_df.sample(n=30, axis='columns')
         sampled_df['Date'] = complete_df['Date']
-        sampled_df.to_csv('cleaned_data.csv')
+        #sampled_df.to_csv('cleaned_data.csv')
         # complete_df.drop('Unnamed: 0', axis=1)
         sampled_df['Date'] = pd.to_datetime(sampled_df['Date'])
         sampled_df.set_index('Date', inplace=True)
@@ -179,8 +179,8 @@ class Data:
         return SMA
 
 
-    def save_file(self, ratios):
-        ratios.to_csv('FINAL.csv', index=False)
+    # def save_file(self, ratios):
+    #     ratios.to_csv('FINAL.csv', index=False)
 
 
 if __name__ == '__main__':
@@ -197,6 +197,6 @@ if __name__ == '__main__':
     print('ratios calculated')
     print(ratios)
     print()
-    data.save_file(ratios)
+    #data.save_file(ratios)
     print('File saved...')
     print('Done!')
