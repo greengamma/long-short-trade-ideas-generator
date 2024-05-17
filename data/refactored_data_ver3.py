@@ -90,9 +90,8 @@ class Data:
             #    break
             #except:
             #    print('Please enter an integer')
-            #week_count = 6
+            week_count = 6
             break
-        week_count = 6
         new_df = friday_df.iloc[-week_count:, :]
 
         column_index = 0
