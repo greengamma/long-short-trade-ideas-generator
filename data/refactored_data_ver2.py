@@ -15,24 +15,14 @@ class Data:
         pass
 
 
+    #creates list of sp500 ticker names from csv file
     def get_tickers(self):
-        url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
-        tables = pd.read_html(url)
-        df = tables[0]
-        tickers = df['Symbol']
-        tickers.to_csv('tickers_new.csv', index=False, header=True)
+        '''creates list of sp500 ticker names from csv file'''
+
+        tickers = pd.read_csv('../raw_data/tickers.csv').squeeze('columns')
+        tickers = tickers.tolist()
 
         return tickers
-
-
-    #creates list of sp500 ticker names from csv file
-    # def get_tickers(self):
-    #     '''creates list of sp500 ticker names from csv file'''
-
-    #     tickers = pd.read_csv('../raw_data/tickers.csv').squeeze('columns')
-    #     tickers = tickers.tolist()
-
-    #     return tickers
 
 
     def get_prices(self, tickers, time_period="6mo"):
@@ -186,17 +176,9 @@ class Data:
 if __name__ == '__main__':
     data = Data()
     tickers = data.get_tickers()
-    print()
-    print()
     print('tickers updated...')
-    print()
-    print()
     prices = data.get_prices(tickers, time_period="3mo")
     print('prices calculated')
     ratios = data.get_ratios(10)
     print('ratios calculated')
     print(ratios)
-    print()
-    #data.save_file(ratios)
-    print('File saved...')
-    print('Done!')
