@@ -14,13 +14,26 @@ class Data:
     def __init__(self):
         pass
 
-    #creates list of sp500 ticker names from csv file
-    def get_tickers(self):
-        '''creates list of sp500 ticker names from csv file'''
 
-        tickers = pd.read_csv('../raw_data/tickers.csv').squeeze('columns')
-        tickers = tickers.tolist()
+    def get_tickers(self):
+        url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+        tables = pd.read_html(url)
+        df = tables[0]
+        tickers = df['Symbol']
+        tickers.to_csv('tickers_new.csv', index=False, header=True)
+
         return tickers
+
+
+    #creates list of sp500 ticker names from csv file
+    # def get_tickers(self):
+    #     '''creates list of sp500 ticker names from csv file'''
+
+    #     tickers = pd.read_csv('../raw_data/tickers.csv').squeeze('columns')
+    #     tickers = tickers.tolist()
+
+    #     return tickers
+
 
     def get_prices(self, tickers, time_period="6mo"):
         '''gets prices from yfinance for time_period for each ticker in arg list'''
@@ -35,7 +48,9 @@ class Data:
             df.set_index('Date', inplace=True)
 
         df.to_excel('../raw_data/weekly_prices.xlsx')
+
         return df
+
 
     def get_ratios(self, wk_count):
 
@@ -132,7 +147,9 @@ class Data:
         sampled_df.set_index('Date', inplace=True)
         sampled_df.to_excel('../raw_data/cleaned_data.xlsx', index=True)
         print('completed ratios')
+
         return sampled_df
+
 
     def split_hedge_names(self, df):
         '''splits hedge name pairs in df for frontend use'''
@@ -140,7 +157,9 @@ class Data:
         hedge_pairs = []
         for hedge in hedges:
             hedge_pairs.append(hedge.split('_'))
+
         return hedge_pairs
+
 
     def create_SMA(self, days):
         '''Creates Simple moving average for all ratios given for x days'''
@@ -156,15 +175,28 @@ class Data:
             SMA.insert(insert_index, column_name, col)
             i = i + 1
         SMA.to_excel(f'raw_data/sma_{days}_days.xlsx')
+
         return SMA
+
+
+    def save_file(self, ratios):
+        ratios.to_csv('FINAL.csv', index=False)
 
 
 if __name__ == '__main__':
     data = Data()
     tickers = data.get_tickers()
-    print('tickers made')
+    print()
+    print()
+    print('tickers updated...')
+    print()
+    print()
     prices = data.get_prices(tickers, time_period="3mo")
     print('prices calculated')
     ratios = data.get_ratios(10)
     print('ratios calculated')
     print(ratios)
+    print()
+    data.save_file(ratios)
+    print('File saved...')
+    print('Done!')
