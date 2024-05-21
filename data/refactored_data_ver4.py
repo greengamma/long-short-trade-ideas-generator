@@ -160,8 +160,24 @@ class Data:
         return SMA
 
 
-    # def save_file(self, ratios):
-    #     ratios.to_csv('FINAL.csv', index=False)
+    def save_file(self, increasing_trend_df, full_week_df):
+        excel_file_path = 'final.xlsx'
+
+        # Save both DataFrames to the Excel file with separate worksheets
+        with pd.ExcelWriter(excel_file_path, engine='xlswriter') as writer:
+            increasing_trend_df.to_excel(writer, sheet_name='Friday_closing', index=False)
+            full_week_df.to_excel(writer, sheet_name='Full_week_closing', index=False)
+
+            workbook  = writer.book
+            worksheet1 = writer.sheets['Friday_closing']
+            worksheet2 = writer.sheets['Full_week_closing']
+
+            # Define the date format
+            date_format = workbook.add_format({'num_format': 'mm/dd/yyyy'})
+
+            # Apply the date format to the Date column in both sheets
+            worksheet1.set_column('A:A', 12, date_format)
+            worksheet2.set_column('A:A', 12, date_format)
 
 
 if __name__ == '__main__':
@@ -175,4 +191,5 @@ if __name__ == '__main__':
     prices = data.get_prices(tickers, time_period="3mo")
     print('prices calculated')
     increasing_trend_df, full_week_df = data.get_ratios()
+    save_file(increasing_trend_df, full_week_df)
     print('ratios calculated')
