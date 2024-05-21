@@ -42,7 +42,7 @@ class Data:
         return df
 
 
-    def get_ratios(self, wk_count):
+    def get_ratios(self, week_count=6):
 
         df = pd.read_excel('../raw_data/weekly_prices.xlsx')
         df.set_index('Date', inplace=True)
@@ -83,7 +83,7 @@ class Data:
         friday_df.drop("day_of_week", axis=1, inplace=True)
 
         ## return only those ratios which had an increasing trend for n weeks, based on Fridays' closing prices
-        week_count = 6
+        #week_count = 6
         new_df = friday_df.iloc[-week_count:, :]
 
         column_index = 0
@@ -115,7 +115,6 @@ class Data:
         full_week_df = complete_df.copy()
         full_week_df['Weekday'] = full_week_df['Date'].dt.day_name()
         cols = increasing_trend_df.columns.tolist()
-
         cols.insert(1, cols.pop(cols.index('Weekday')))
         full_week_df = full_week_df[cols]
 
@@ -130,7 +129,7 @@ class Data:
         # sampled_df.to_excel('../raw_data/cleaned_data.xlsx', index=True)
         print('completed ratios')
 
-        return sampled_df
+        return increasing_trend_df, full_week_df
 
 
     def split_hedge_names(self, df):
@@ -175,5 +174,5 @@ if __name__ == '__main__':
     print()
     prices = data.get_prices(tickers, time_period="3mo")
     print('prices calculated')
-    ratios = data.get_ratios(10)
+    increasing_trend_df, full_week_df = data.get_ratios()
     print('ratios calculated')
