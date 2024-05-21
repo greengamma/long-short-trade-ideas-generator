@@ -83,15 +83,7 @@ class Data:
         friday_df.drop("day_of_week", axis=1, inplace=True)
 
         ## return only those ratios which had an increasing trend for n weeks, based on Fridays' closing prices
-
-        while 1:
-            #try:
-            #    week_count = int(eval(input('For last n weeks: ')))
-            #    break
-            #except:
-            #    print('Please enter an integer')
-            week_count = 6
-            break
+        week_count = 6
         new_df = friday_df.iloc[-week_count:, :]
 
         column_index = 0
@@ -99,29 +91,19 @@ class Data:
 
         increasing_trend_list = []
 
-        while 1:
-            try:
 
-                ## parsing by column
-                temp_series = new_df.iloc[:, column_index]
-                temp_series_list = temp_series.values.tolist()
-                temp_series_list_sorted = sorted(temp_series_list,
-                                                 key=float,
-                                                 reverse=False)
+        for column in new_df.columns:
+            temp_series = new_df[column]
+            temp_series_list = temp_series.values.tolist()
+            temp_series_list_sorted = sorted(temp_series_list)
 
-                if temp_series_list == temp_series_list_sorted:
-                    increasing_trend_list.append(True)
-                else:
-                    increasing_trend_list.append(False)
-                column_index += 1
+            if temp_series_list == temp_series_list_sorted:
+                increasing_trend_list.append(True)
+            else:
+                increasing_trend_list.append(False)
 
-            except Exception as e:
-                exc_type, exc_obj, exc_tb = sys.exc_info()
-                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                print(exc_type, fname, exc_tb.tb_lineno)
-                break
-
-        increasing_trend_df = new_df.iloc[:, increasing_trend_list]
+# Create a new DataFrame with only the columns that have an increasing trend
+increasing_trend_df = new_df.loc[:, increasing_trend_list]
 
         ## filters the dataframe according to last n weeks with a positive trend:
         ## increasing_trend_df: contains WEEKLY closing prices for 'n' Fridays
