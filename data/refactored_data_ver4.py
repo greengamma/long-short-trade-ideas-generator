@@ -152,7 +152,8 @@ class Data:
         return SMA
 
 
-    def save_file(increasing_trend_df, full_week_df):
+class DataSaver:
+    def save_file(self, increasing_trend_df, full_week_df):
         excel_file_path = '../results/final.xlsx'
 
         # Save both DataFrames to the Excel file with separate worksheets
@@ -183,5 +184,6 @@ if __name__ == '__main__':
     prices = data.get_prices(tickers, time_period="3mo")
     print('prices calculated')
     increasing_trend_df, full_week_df = data.get_ratios()
-    save_file(increasing_trend_df, full_week_df)
+    data_saver = DataSaver()
+    data_saver.save_file(increasing_trend_df, full_week_df)
     print('ratios calculated')
