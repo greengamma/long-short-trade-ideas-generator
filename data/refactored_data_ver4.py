@@ -101,8 +101,9 @@ class Data:
                 increasing_trend_list.append(True)
             else:
                 increasing_trend_list.append(False)
-
         # Create a new DataFrame with only the columns that have an increasing trend
+        increasing_trend_df = new_df.loc[:, increasing_trend_list]
+
         df_positiveRatios.reset_index(inplace=True)
         complete_df = df_positiveRatios[increasing_trend_df.columns]
 
@@ -118,15 +119,6 @@ class Data:
         cols.insert(1, cols.pop(cols.index('Weekday')))
         full_week_df = full_week_df[cols]
 
-
-        # sample 10 ratios
-        # sampled_df = complete_df.sample(n=30, axis='columns')
-        # sampled_df['Date'] = complete_df['Date']
-        # #sampled_df.to_csv('cleaned_data.csv')
-        # # complete_df.drop('Unnamed: 0', axis=1)
-        # sampled_df['Date'] = pd.to_datetime(sampled_df['Date'])
-        # sampled_df.set_index('Date', inplace=True)
-        # sampled_df.to_excel('../raw_data/cleaned_data.xlsx', index=True)
         print('completed ratios')
 
         return increasing_trend_df, full_week_df
@@ -161,10 +153,10 @@ class Data:
 
 
     def save_file(self, increasing_trend_df, full_week_df):
-        excel_file_path = 'final.xlsx'
+        excel_file_path = '../results/final.xlsx'
 
         # Save both DataFrames to the Excel file with separate worksheets
-        with pd.ExcelWriter(excel_file_path, engine='xlswriter') as writer:
+        with pd.ExcelWriter(excel_file_path) as writer:
             increasing_trend_df.to_excel(writer, sheet_name='Friday_closing', index=False)
             full_week_df.to_excel(writer, sheet_name='Full_week_closing', index=False)
 
@@ -176,8 +168,8 @@ class Data:
             date_format = workbook.add_format({'num_format': 'mm/dd/yyyy'})
 
             # Apply the date format to the Date column in both sheets
-            worksheet1.set_column('A:A', 12, date_format)
-            worksheet2.set_column('A:A', 12, date_format)
+            worksheet1.set_column('A:A', None, date_format)
+            worksheet2.set_column('A:A', None, date_format)
 
 
 if __name__ == '__main__':
