@@ -102,22 +102,32 @@ class Data:
             else:
                 increasing_trend_list.append(False)
 
-# Create a new DataFrame with only the columns that have an increasing trend
-increasing_trend_df = new_df.loc[:, increasing_trend_list]
-
-        ## filters the dataframe according to last n weeks with a positive trend:
-        ## increasing_trend_df: contains WEEKLY closing prices for 'n' Fridays
-        ## complete_df: contains DAILY closing prices for the last 3 months
+        # Create a new DataFrame with only the columns that have an increasing trend
         df_positiveRatios.reset_index(inplace=True)
         complete_df = df_positiveRatios[increasing_trend_df.columns]
+
+        # Add "Weekday" next to the "Date" column for both dataframes, i.e. Friday only and full week dataframe
+        increasing_trend_df['Weekday'] = increasing_trend_df['Date'].dt.day_name()
+        cols = increasing_trend_df.columns.tolist()
+        cols.insert(1, cols.pop(cols.index('Weekday')))
+        increasing_trend_df = increasing_trend_df[cols]
+
+        full_week_df = complete_df.copy()
+        full_week_df['Weekday'] = full_week_df['Date'].dt.day_name()
+        cols = increasing_trend_df.columns.tolist()
+
+        cols.insert(1, cols.pop(cols.index('Weekday')))
+        full_week_df = full_week_df[cols]
+
+
         # sample 10 ratios
-        sampled_df = complete_df.sample(n=30, axis='columns')
-        sampled_df['Date'] = complete_df['Date']
-        #sampled_df.to_csv('cleaned_data.csv')
-        # complete_df.drop('Unnamed: 0', axis=1)
-        sampled_df['Date'] = pd.to_datetime(sampled_df['Date'])
-        sampled_df.set_index('Date', inplace=True)
-        sampled_df.to_excel('../raw_data/cleaned_data.xlsx', index=True)
+        # sampled_df = complete_df.sample(n=30, axis='columns')
+        # sampled_df['Date'] = complete_df['Date']
+        # #sampled_df.to_csv('cleaned_data.csv')
+        # # complete_df.drop('Unnamed: 0', axis=1)
+        # sampled_df['Date'] = pd.to_datetime(sampled_df['Date'])
+        # sampled_df.set_index('Date', inplace=True)
+        # sampled_df.to_excel('../raw_data/cleaned_data.xlsx', index=True)
         print('completed ratios')
 
         return sampled_df
