@@ -152,7 +152,7 @@ class Data:
         return SMA
 
 
-    def save_file(self, increasing_trend_df, full_week_df):
+    def save_file(increasing_trend_df, full_week_df):
         excel_file_path = '../results/final.xlsx'
 
         # Save both DataFrames to the Excel file with separate worksheets
