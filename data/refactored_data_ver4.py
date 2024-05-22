@@ -119,6 +119,9 @@ class Data:
         cols.insert(1, cols.pop(cols.index('Weekday')))
         full_week_df = full_week_df[cols]
 
+        cleaned_increasing_trend_df = increasing_trend_df.dropna(axis=1, how='any')
+        cleaned_full_week_df = full_week_df.dropna(axis=1, how='any')
+
         print('completed ratios')
 
         return increasing_trend_df, full_week_df
@@ -184,6 +187,8 @@ if __name__ == '__main__':
     prices = data.get_prices(tickers, time_period="3mo")
     print('prices calculated')
     increasing_trend_df, full_week_df = data.get_ratios()
+    print('ratios calculated')
+    print('Saving...')
     data_saver = DataSaver()
     data_saver.save_file(increasing_trend_df, full_week_df)
-    print('ratios calculated')
+    print('Done!')
