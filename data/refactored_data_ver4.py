@@ -124,7 +124,7 @@ class Data:
 
         print('completed ratios')
 
-        return increasing_trend_df, full_week_df
+        return cleaned_increasing_trend_df, cleaned_full_week_df
 
 
     def split_hedge_names(self, df):
