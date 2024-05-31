@@ -192,4 +192,3 @@ if __name__ == '__main__':
     data_saver = DataSaver()
     data_saver.save_file(increasing_trend_df, full_week_df)
     print('Done!')
-## done
